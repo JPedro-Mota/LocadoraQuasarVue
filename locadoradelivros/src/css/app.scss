@@ -1,0 +1,29 @@
+
+.graphics-top{
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.doughnut{
+    box-shadow: 1px 1px 1px 2px rgb(0, 0, 0);
+}
+
+.tb{
+    box-shadow: 1px 1px 1px 2px rgb(0, 0, 0);
+    padding: 10px;
+    margin-top: 10px;
+}
+
+#graphic-bar{
+    box-shadow:none;
+    width: 100%;
+    height: 90%;
+}
+
+
+#title{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

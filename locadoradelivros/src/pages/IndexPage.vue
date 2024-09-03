@@ -49,8 +49,8 @@ const getTable = async () => {
 
     const response = await api.get('/rent/renters');
 
-    if (Array.isArray(response.data.content)) {
-      rows.value = response.data.content
+    if (Array.isArray(response.data)) {
+      rows.value = response.data
         .sort((a, b) => b.totalRents - a.totalRents)
         .slice(0, 3);
       console.log("Dados obtidos com sucesso");

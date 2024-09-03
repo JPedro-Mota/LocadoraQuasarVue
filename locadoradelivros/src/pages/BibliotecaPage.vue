@@ -137,14 +137,7 @@ import TableComponents from '../components/TableComponents.vue';
 import { api, authenticate } from 'src/boot/axios';
 
 onMounted(() => {
-  authenticate()
-    .then(() => {
-      console.log("Sucesso");
       getTable();
-    })
-    .catch(error => {
-      console.error("Erro na autenticação", error);
-    });
 });
 
 const columns = [

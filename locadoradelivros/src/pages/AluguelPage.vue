@@ -95,15 +95,8 @@ import TableComponents from '../components/TableComponents.vue';
 import { api, authenticate } from 'src/boot/axios';
 
 onMounted(() => {
-  authenticate()
-    .then(() => {
-      console.log("Sucesso");
       getTable();
     })
-    .catch(error => {
-      console.error("Erro na autenticação", error);
-    });
-});
 
 const columns = [
   { name: 'renterName', align: 'center', label: 'Locatário', field: 'renterName' },
@@ -118,7 +111,7 @@ const rows = ref([]);
 const text = ref('');
 
 const getTable = (inputSearch = '') => {
-  api.get('/rent', { params: { search: inputSearch } })
+  api.get('/rents', { params: { search: inputSearch } })
     .then(response => {
       if (Array.isArray(response.data.content)) {
         rows.value = response.data.content;
@@ -143,7 +136,7 @@ const newRent = ref({
 });
 
 const getApi = (id) => {
-  api.get(`/rent/`)
+  api.get(`/rents/`)
     .then(response => {
       InfosEdit.value = response.data;
       console.log(InfosEdit.value);

@@ -2,14 +2,26 @@ import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
 
-const api = axios.create({ baseURL: 'https://livraria-api.altislabtech.com.br' })
-const authenticate = () => {
+const api = axios.create({
+  baseURL: 'http://localhost:8040',
+  headers: {
+    "Content-Type": "application/json"
+  }
+});
+
+const token = localStorage.getItem('authToken');
+if (token) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+const authenticate = (username, password) => {
   return api.post('/auth/login', {
-    username: 'admin',
-    password: '12345678'
+    username: username,
+    password: password
   })
   .then(response => {
     const token = response.data.token;
+    if (token)
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   })
   .catch(error => {

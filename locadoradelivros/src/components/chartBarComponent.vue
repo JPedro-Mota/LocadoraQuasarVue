@@ -54,7 +54,6 @@ onMounted(async () => {
     data: {
       labels: ['Alugados', 'Atrasados', 'No prazo', 'Fora do prazo'],
       datasets: [{
-        label: '',
         data: [rentsQtd.value, delayed.value, inTime.value, delivered.value],
         backgroundColor: ['rgb(34, 1, 39)', 'rgb(217, 2, 9)', 'rgb(54, 162, 235)',  'rbg(217, 2, 9)'],
         borderWidth: 0,
@@ -67,6 +66,12 @@ onMounted(async () => {
       scales: {
         y: {
           beginAtZero: true
+        }
+      },
+      plugins: {
+        legend: {
+          display: false,
+          position: 'top',
         }
       }
     }

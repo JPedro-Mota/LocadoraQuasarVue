@@ -128,14 +128,7 @@ import TableComponents from '../components/TableComponents.vue';
 import { api, authenticate } from 'src/boot/axios';
 
 onMounted(() => {
-  authenticate()
-    .then(() => {
-      console.log("Sucesso");
-      getTable();
-    })
-    .catch(error => {
-      console.error("Erro na autenticação", error);
-    });
+  getTable();
 });
 
 const columns = [
@@ -147,10 +140,10 @@ const rows = ref([]);
 const text = ref('');
 
 const getTable = (inputSearch = '') => {
-  api.get('/users', { params: { search: inputSearch } })
+  api.get('/user', { params: { search: inputSearch } })
     .then(response => {
-      if (Array.isArray(response.data.content)) {
-        rows.value = response.data.content;
+      if (Array.isArray(response.data)) {
+        rows.value = response.data;
         console.log("Dados obtidos com sucesso");
       } else {
         console.error('A resposta da API não é um array:', response.data);
@@ -167,7 +160,7 @@ const InfosEdit = ref({});
 const newPublisher = ref({ name: '', email: '', telephone: '', site: '' });
 
 const getApi = (id) => {
-  api.get(`/users/${id}`)
+  api.get(`/user/${id}`)
     .then(response => {
       InfosEdit.value = response.data;
       publisherToEdit.value = response.data;

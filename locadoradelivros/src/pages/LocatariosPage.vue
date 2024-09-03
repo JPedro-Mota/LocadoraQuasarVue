@@ -136,14 +136,7 @@ import TableComponents from '../components/TableComponents.vue';
 import { api, authenticate } from 'src/boot/axios';
 
 onMounted(() => {
-  authenticate()
-    .then(() => {
-      console.log("Sucesso");
-      getTable();
-    })
-    .catch(error => {
-      console.error("Erro na autenticação", error);
-    });
+    getTable();
 });
 
 const columns = [
@@ -157,9 +150,9 @@ const text = ref('');
 const getTable = (inputSearch = '') => {
   api.get('/renter', { params: { search: inputSearch } })
     .then(response => {
-      if (Array.isArray(response.data.content)) {
-        rows.value = response.data.content;
-        console.log("Dados obtidos com sucesso");
+      if (Array.isArray(response.data)) {
+        rows.value = response.data;
+        console.log(response.data);
       } else {
         console.error('A resposta da API não é um array:', response.data);
         rows.value = [];
@@ -167,7 +160,7 @@ const getTable = (inputSearch = '') => {
       console.log('Resposta da API:', response.data);
     })
     .catch(error => {
-      console.error("Erro ao obter dados:", error);
+      console.error("aaaaaaaaaaaaaaaaaaaaaaaaa:", error);
     });
 }
 
@@ -178,7 +171,7 @@ const getApi = (id) => {
   api.get(`/renter/${id}`)
     .then(response => {
       InfosEdit.value = response.data;
-      renterToEdit.value = response.data; 
+      renterToEdit.value = response.data;
     })
     .catch(error => {
       console.error("Erro", error);

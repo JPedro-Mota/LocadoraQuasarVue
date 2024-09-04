@@ -27,13 +27,12 @@
           <q-dialog v-model="viewDialog.visible" persistent>
             <q-card>
               <q-card-section>
-                <div class="text-h6">Detalhes da Editora</div>
+                <div class="text-h6">Detalhes de Usuário</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
-                <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
-                <div><strong>Email:</strong> {{ InfosEdit.email }}</div>
-                <div><strong>Telefone:</strong> {{ InfosEdit.telephone }}</div>
-                <div><strong>Site:</strong> {{ InfosEdit.site }}</div>
+                <div><strong>Nome:</strong> {{ InfosUser.name }}</div>
+                <div><strong>Email:</strong> {{ InfosUser.email }}</div>
+                <div><strong>Nível de acesso:</strong> {{ InfosUser.role}}</div>
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Fechar" color="primary" v-close-popup />
@@ -47,10 +46,10 @@
                 <div class="text-h6">Editar Usuário </div>
               </q-card-section>
               <q-card-section class="q-pt-none">
-                <q-input v-model="publisherToEdit.name" label="Nome" />
-                <q-input v-model="publisherToEdit.email" label="Email" />
-                <q-input v-model="publisherToEdit.password" label="Senha" />
-                <q-input v-model="publisherToEdit.role" label="Nível de acesso" />
+                <q-input v-model="userToEdit.name" label="Nome" />
+                <q-input v-model="userToEdit.email" label="Email" />
+                <q-input v-model="userToEdit.password" label="Senha" />
+                <q-input v-model="userToEdit.role" label="Nível de acesso" />
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
@@ -80,13 +79,13 @@
                 <div class="text-h6">Cadastrar Usuário</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
-                <q-input v-model="publisherToEdit.name" label="Nome" />
-                <q-input v-model="publisherToEdit.email" label="Email" />
-                <q-input v-model="publisherToEdit.password" label="Senha" />
-                  <q-select filled  v-model="publisherToEdit.role" :options="options" label="Nível de acesso" />
+                <q-input v-model="userToCreate.name" label="Nome" />
+                <q-input v-model="userToCreate.email" label="Email" />
+                <q-input v-model="userToCreate.password" label="Senha" />
+                  <q-select filled  v-model="userToCreate.role" :options="options" label="Nível de acesso" />
               </q-card-section>
               <q-card-actions align="right">
-                <q-btn flat label="Salvar" color="primary" @click="saveNewPublisher" />
+                <q-btn flat label="Salvar" color="primary" @click="saveNewUser" />
                 <q-btn flat label="Cancelar" color="primary" v-close-popup />
               </q-card-actions>
             </q-card>
@@ -156,14 +155,14 @@ const getTable = (inputSearch = '') => {
     });
 }
 
-const InfosEdit = ref({});
-const newPublisher = ref({ name: '', email: '', telephone: '', site: '' });
+const InfosUser = ref({});
+const newUser = ref({ name: '', email: '', password: '', role: '' });
 
 const getApi = (id) => {
   api.get(`/user/${id}`)
     .then(response => {
-      InfosEdit.value = response.data;
-      publisherToEdit.value = response.data;
+      InfosUser.value = response.data;
+      userToEdit.value = response.data;
       console.log(InfosEdit.value);
     })
     .catch(error => {
@@ -208,23 +207,28 @@ const openDeleteDialog = (row) => {
 };
 
 const openCreateDialog = () => {
-  newPublisher.value = { name: '', email: '', telephone: '', site: '' };
+  newUser.value = { name: '', email: '', password: '', role: '' };
   createDialog.value.visible = true;
 }
 
-const publisherToEdit = ref({
+const options = ref([
+  { label: 'ADMIN', value: 'ADMIN' },
+  { label: 'USER', value: 'USER' }
+]);
+
+const userToCreate = ref({
   id: '',
   name: '',
   email: '',
-  telephone: 0,
-  site: ''
+  password: '',
+  role: ''
 });
 
 const saveEdit = () => {
-  console.log("Dados antes de salvar a edição:", publisherToEdit.value);
+  console.log("Dados antes de salvar a edição:", userToEdit.value);
   const index = rows.value.findIndex(r => r.id === editDialog.value.data.id);
   if (index !== -1) {
-    api.put( `/users`, {...publisherToEdit.value})
+    api.put( `/users`, {...userToEdit.value})
       .then(response => {
         console.log("Resposta da API ao salvar a edição:", response.data);
         rows.value[index] = { ...response.data };
@@ -239,7 +243,7 @@ const saveEdit = () => {
 const confirmDelete = () => {
   const index = rows.value.findIndex(r => r.id === deleteDialog.value.data.id);
   if (index !== -1) {
-    api.delete(`/publisher/${deleteDialog.value.data.id}`)
+    api.delete(`/user/${deleteDialog.value.data.id}`)
       .then(() => {
         rows.value.splice(index, 1);
         deleteDialog.value.visible = false;
@@ -250,15 +254,21 @@ const confirmDelete = () => {
   }
 };
 
-const saveNewPublisher = () => {
-  api.post('/publisher', newPublisher.value)
-    .then(response => {
-      rows.value.push(response.data);
-      createDialog.value.visible = false;
-    })
-    .catch(error => {
-      console.error("Erro ao criar nova editora:", error);
-    });
+const saveNewUser = () => {
+    const userData = {
+      name: userToCreate.value.name,
+      email: userToCreate.value.email,
+      password: userToCreate.value.password,
+      role: userToCreate.value.role.value // <--- AQUI É O PROBLEMA
+    };
+    api.post('/user', userData)
+      .then(response => {
+        rows.value.push(response.data);
+        createDialog.value.visible = false;
+      })
+      .catch(error => {
+        console.error("Erro ao criar nova editora:", error);
+      });
 };
 
 const clearSearch = () => {

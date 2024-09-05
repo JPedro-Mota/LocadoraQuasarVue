@@ -16,7 +16,7 @@ if (token) {
 
 const authenticate = (username, password) => {
   return api.post('/auth/login', {
-    username: username,
+    name: username,
     password: password
   })
   .then(response => {

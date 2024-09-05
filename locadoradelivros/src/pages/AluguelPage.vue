@@ -63,6 +63,117 @@
   </q-page>
 </template>
 
+<script setup>
+import { onMounted, ref, computed } from 'vue';
+import TableComponents from '../components/TableComponents.vue';
+import { api } from 'src/boot/axios';
+
+onMounted(() => {
+  getTable();
+});
+
+const columns = [
+  { name: 'renterName', align: 'center', label: 'Locatário', field: 'renterName' },
+  { name: 'bookName', align: 'center', label: 'Livro', field: 'bookName' },
+  { name: 'deadLine', align: 'center', label: 'Devolução', field: 'deadLine' },
+  { name: 'status', align: 'center', label: 'Status', field: 'status' },
+  { name: 'actions', align: 'center', label: 'Ações', field: 'actions' },
+];
+
+const rows = ref([]);
+const text = ref('');
+
+const getTable = (inputSearch = '') => {
+  api.get('/rents', { params: { search: inputSearch } })
+    .then(response => {
+      console.log("Dados obtidos:", response.data); 
+      if (Array.isArray(response.data)) {
+        rows.value = response.data;
+      } else {
+        console.error('A resposta da API não é um array:', response.data);
+        rows.value = [];
+      }
+    })
+    .catch(error => {
+      console.error("Erro ao obter dados:", error);
+    });
+};
+
+const confirmDialog = ref({
+  visible: false,
+  data: {}
+});
+
+const newRent = ref({
+  renterId: 0,
+  bookId: 0,
+  deadline: ''
+});
+
+const createDialog = ref({
+  visible: false,
+  data: {}
+});
+
+const openConfirmDialog = (row) => {
+  confirmDialog.value.data = { ...row };
+  confirmDialog.value.visible = true;
+};
+
+const confirmUpdateStatus = () => {
+  const row = confirmDialog.value.data;
+  const updatedStatus = "DELIVERED";
+  api.put(`/rents/${row.id}`, { ...row, status: updatedStatus })
+    .then(response => {
+      console.log("Status atualizado com sucesso:", response.data);
+      const index = rows.value.findIndex(r => r.id === row.id);
+      if (index !== -1) {
+        rows.value[index].status = updatedStatus;
+      }
+      confirmDialog.value.visible = false;
+    })
+    .catch(error => {
+      console.error("Erro ao atualizar status:", error.response ? error.response.data : error.message);
+    });
+};
+
+const openCreateDialog = () => {
+  newRent.value = { renterId: '', bookId: '', deadline: '' };
+  createDialog.value.visible = true;
+};
+
+const saveNewRent = () => {
+  api.post('/rents', newRent.value)
+    .then(response => {
+      rows.value.push(response.data);
+      createDialog.value.visible = false;
+    })
+    .catch(error => {
+      console.error("Erro ao criar novo aluguel:", error.response ? error.response.data : error.message);
+    });
+};
+
+const clearSearch = () => {
+  text.value = '';
+  getTable();
+};
+
+const filteredRows = computed(() => {
+  if (!text.value) {
+    return rows.value;
+  }
+  return rows.value.filter(row =>
+    Object.values(row).some(value =>
+      value.toString().toLowerCase().includes(text.value.toLowerCase())
+    )
+  );
+});
+
+const onSubmit = () => {
+  console.log("Teste");
+};
+</script>
+
 <style>
 .title {
   padding-left: 40px;
@@ -88,132 +199,3 @@
   margin-bottom: 2%;
 }
 </style>
-
-<script setup>
-import { onMounted, ref, computed } from 'vue';
-import TableComponents from '../components/TableComponents.vue';
-import { api, authenticate } from 'src/boot/axios';
-
-onMounted(() => {
-      getTable();
-    })
-
-const columns = [
-  { name: 'renterName', align: 'center', label: 'Locatário', field: 'renterName' },
-  { name: 'bookName', align: 'center', label: 'Livro', field: 'bookName' },
-  { name: 'rentDate', align: 'center', label: 'Alugado', field: 'rentDate' },
-  { name: 'deadLineDate', align: 'center', label: 'Devolução', field: 'deadLineDate' },
-  { name: 'status', align: 'center', label: 'Status', field: 'status' },
-  { name: 'actions', align: 'center', label: 'Ações', field: 'actions' },
-];
-
-const rows = ref([]);
-const text = ref('');
-
-const getTable = (inputSearch = '') => {
-  api.get('/rents', { params: { search: inputSearch } })
-    .then(response => {
-      if (Array.isArray(response.data.content)) {
-        rows.value = response.data.content;
-        console.log("Dados obtidos com sucesso");
-      } else {
-        console.error('A resposta da API não é um array:', response.data);
-        rows.value = [];
-      }
-      console.log('Resposta da API:', response.data);
-    })
-    .catch(error => {
-      console.error("Erro ao obter dados:", error);
-    });
-}
-
-const InfosEdit = ref({});
-
-const newRent = ref({
-  renterId: 0,
-   bookId: 0,
-   deadline: ''
-});
-
-const getApi = (id) => {
-  api.get(`/rents/`)
-    .then(response => {
-      InfosEdit.value = response.data;
-      console.log(InfosEdit.value);
-    })
-    .catch(error => {
-      console.error("Erro", error);
-    });
-}
-
-const createDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const confirmDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const openConfirmDialog = (row) => {
-  confirmDialog.value.data = { ...row };
-  confirmDialog.value.visible = true;
-};
-
-const confirmUpdateStatus = () => {
-  const row = confirmDialog.value.data;
-  const updatedStatus = "DELIVERED";
-  api.put(`/rent/${row.id}`, { ...row, status: updatedStatus })
-    .then(response => {
-      console.log("Status atualizado com sucesso:", response.data);
-      const index = rows.value.findIndex(r => r.id === row.id);
-      if (index !== -1) {
-        rows.value[index].status = updatedStatus;
-      }
-      confirmDialog.value.visible = false;
-    })
-    .catch(error => {
-      console.error("Erro ao atualizar status:", error.response ? error.response.data : error.message);
-    });
-};
-
-
-const openCreateDialog = () => {
-  newRent.value = { renterId: '', bookId: '', deadline: ''};
-  createDialog.value.visible = true;
-}
-
-const saveNewRent = () => {
-  console.log("Tentando criar novo livro com:", newRent.value);
-  api.post('/rent', newRent.value)
-    .then(response => {
-      console.log("Livro criado com sucesso:", response.data);
-      rows.value.push(response.data);
-      createDialog.value.visible = false;
-    })
-    .catch(error => {
-      console.error("Erro ao criar novo livro:", error.response ? error.response.data : error.message);
-    });
-};
-
-const clearSearch = () => {
-  text.value = '';
-  getTable();
-};
-
-const filteredRows = computed(() => {
-  if (!text.value) {
-    return rows.value;
-  }
-  return rows.value.filter(row =>
-    Object.values(row).some(value =>
-      value.toString().toLowerCase().includes(text.value.toLowerCase())
-    )
-  );
-});
-
-const onSubmit = () => {
-  console.log("Teste");
-};
-</script>

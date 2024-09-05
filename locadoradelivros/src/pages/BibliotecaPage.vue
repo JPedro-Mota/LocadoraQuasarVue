@@ -151,8 +151,8 @@ const text = ref('');
 const getTable = (inputSearch = '') => {
   api.get('/book', { params: { search: inputSearch } })
     .then(response => {
-      if (Array.isArray(response.data.content)) {
-        rows.value = response.data.content;
+      if (Array.isArray(response.data)) {
+        rows.value = response.data;
         console.log("Dados obtidos com sucesso");
       } else {
         console.error('A resposta da API não é um array:', response.data);
@@ -169,7 +169,7 @@ const InfosEdit = ref({});
 const newBook = ref({ name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' });
 
 const getApi = (id) => {
-  api.get(`/book/` + id)
+  api.get(`/book/${id}`)
     .then(response => {
       InfosEdit.value = response.data;
       console.log(InfosEdit.value);
@@ -234,18 +234,18 @@ const bookToEdit = ref({
 
 const saveEdit = () => {
   console.log("Dados antes de salvar a edição:", bookToEdit.value);
-  const index = rows.value.findIndex(r => r.id === editDialog.value.data.id);
-  if (index !== -1) {
-    api.put( `/book`, {...bookToEdit.value, publisherId: Number(bookToEdit.value.publisherId)})
-      .then(response => {
-        console.log("Resposta da API ao salvar a edição:", response.data);
+  api.put(`/book/${bookToEdit.value.id}`, {...bookToEdit.value, publisherId: Number(bookToEdit.value.publisherId)})
+    .then(response => {
+      console.log("Resposta da API ao salvar a edição:", response.data);
+      const index = rows.value.findIndex(r => r.id === bookToEdit.value.id);
+      if (index !== -1) {
         rows.value[index] = { ...response.data };
-        editDialog.value.visible = false;
-      })
-      .catch(error => {
-        console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
-      });
-  }
+      }
+      editDialog.value.visible = false;
+    })
+    .catch(error => {
+      console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
+    });
 };
 
 const confirmDelete = () => {

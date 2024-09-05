@@ -1,7 +1,9 @@
 <template>
   <div class="title">
     <h6>
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm720 0v-120q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v120H760ZM360-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm400-160q0 66-47 113t-113 47q-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113Z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000">
+        <path d="M40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm720 0v-120q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v120H760ZM360-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm400-160q0 66-47 113t-113 47q-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113Z"/>
+      </svg>
       Usuário
     </h6>
   </div>
@@ -24,6 +26,7 @@
           <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
           <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
 
+          <!-- Diálogo de Visualização -->
           <q-dialog v-model="viewDialog.visible" persistent>
             <q-card>
               <q-card-section>
@@ -32,7 +35,7 @@
               <q-card-section class="q-pt-none">
                 <div><strong>Nome:</strong> {{ InfosUser.name }}</div>
                 <div><strong>Email:</strong> {{ InfosUser.email }}</div>
-                <div><strong>Nível de acesso:</strong> {{ InfosUser.role}}</div>
+                <div><strong>Nível de acesso:</strong> {{ InfosUser.role }}</div>
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Fechar" color="primary" v-close-popup />
@@ -40,16 +43,17 @@
             </q-card>
           </q-dialog>
 
+          <!-- Diálogo de Edição -->
           <q-dialog v-model="editDialog.visible" persistent>
             <q-card>
               <q-card-section>
-                <div class="text-h6">Editar Usuário </div>
+                <div class="text-h6">Editar Usuário</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
                 <q-input v-model="userToEdit.name" label="Nome" />
                 <q-input v-model="userToEdit.email" label="Email" />
-                <q-input v-model="userToEdit.password" label="Senha" />
-                <q-input v-model="userToEdit.role" label="Nível de acesso" />
+                <q-input v-model="userToEdit.password" label="Senha" type="password" />
+                <q-select filled v-model="userToEdit.role" :options="options" label="Nível de acesso" />
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
@@ -58,13 +62,14 @@
             </q-card>
           </q-dialog>
 
+          <!-- Diálogo de Exclusão -->
           <q-dialog v-model="deleteDialog.visible" persistent>
             <q-card>
               <q-card-section>
                 <div class="text-h6">Confirmar Exclusão</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
-                Tem certeza que deseja excluir a editora "{{ deleteDialog.data.name }}"?
+                Tem certeza que deseja excluir o usuário "{{ deleteDialog.data.name }}"?
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Excluir" color="primary" @click="confirmDelete" />
@@ -73,6 +78,7 @@
             </q-card>
           </q-dialog>
 
+          <!-- Diálogo de Criação -->
           <q-dialog v-model="createDialog.visible" persistent>
             <q-card>
               <q-card-section>
@@ -81,8 +87,8 @@
               <q-card-section class="q-pt-none">
                 <q-input v-model="userToCreate.name" label="Nome" />
                 <q-input v-model="userToCreate.email" label="Email" />
-                <q-input v-model="userToCreate.password" label="Senha" />
-                  <q-select filled  v-model="userToCreate.role" :options="options" label="Nível de acesso" />
+                <q-input v-model="userToCreate.password" label="Senha" type="password" />
+                <q-select filled v-model="userToCreate.role" :options="options" label="Nível de acesso" />
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveNewUser" />
@@ -124,7 +130,7 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue';
 import TableComponents from '../components/TableComponents.vue';
-import { api, authenticate } from 'src/boot/axios';
+import { api } from 'src/boot/axios';
 
 onMounted(() => {
   getTable();
@@ -148,7 +154,6 @@ const getTable = (inputSearch = '') => {
         console.error('A resposta da API não é um array:', response.data);
         rows.value = [];
       }
-      console.log('Resposta da API:', response.data);
     })
     .catch(error => {
       console.error("Erro ao obter dados:", error);
@@ -156,39 +161,24 @@ const getTable = (inputSearch = '') => {
 }
 
 const InfosUser = ref({});
-const newUser = ref({ name: '', email: '', password: '', role: '' });
+const userToEdit = ref({ name: '', email: '', password: '', role: '' });
+const userToCreate = ref({ name: '', email: '', password: '', role: '' });
 
 const getApi = (id) => {
   api.get(`/user/${id}`)
     .then(response => {
       InfosUser.value = response.data;
       userToEdit.value = response.data;
-      console.log(InfosEdit.value);
     })
     .catch(error => {
       console.error("Erro", error);
     });
 }
 
-const viewDialog = ref({
-  visible: false,
-  data: {},
-});
-
-const editDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const deleteDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const createDialog = ref({
-  visible: false,
-  data: {}
-});
+const viewDialog = ref({ visible: false });
+const editDialog = ref({ visible: false });
+const deleteDialog = ref({ visible: false, data: {} });
+const createDialog = ref({ visible: false });
 
 const openViewDialog = (row) => {
   getApi(row.id);
@@ -197,7 +187,6 @@ const openViewDialog = (row) => {
 
 const openEditDialog = (row) => {
   getApi(row.id);
-  editDialog.value.data = { ...row };
   editDialog.value.visible = true;
 };
 
@@ -207,7 +196,7 @@ const openDeleteDialog = (row) => {
 };
 
 const openCreateDialog = () => {
-  newUser.value = { name: '', email: '', password: '', role: '' };
+  userToCreate.value = { name: '', email: '', password: '', role: '' };
   createDialog.value.visible = true;
 }
 
@@ -216,28 +205,18 @@ const options = ref([
   { label: 'USER', value: 'USER' }
 ]);
 
-const userToCreate = ref({
-  id: '',
-  name: '',
-  email: '',
-  password: '',
-  role: ''
-});
-
 const saveEdit = () => {
-  console.log("Dados antes de salvar a edição:", userToEdit.value);
-  const index = rows.value.findIndex(r => r.id === editDialog.value.data.id);
-  if (index !== -1) {
-    api.put( `/users`, {...userToEdit.value})
-      .then(response => {
-        console.log("Resposta da API ao salvar a edição:", response.data);
+  api.put(`/user/${userToEdit.value.id}`, { ...userToEdit.value })
+    .then(response => {
+      const index = rows.value.findIndex(r => r.id === userToEdit.value.id);
+      if (index !== -1) {
         rows.value[index] = { ...response.data };
-        editDialog.value.visible = false;
-      })
-      .catch(error => {
-        console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
-      });
-  }
+      }
+      editDialog.value.visible = false;
+    })
+    .catch(error => {
+      console.error("Erro ao salvar edição:", error);
+    });
 };
 
 const confirmDelete = () => {
@@ -255,20 +234,16 @@ const confirmDelete = () => {
 };
 
 const saveNewUser = () => {
-    const userData = {
-      name: userToCreate.value.name,
-      email: userToCreate.value.email,
-      password: userToCreate.value.password,
-      role: userToCreate.value.role.value // <--- AQUI É O PROBLEMA
-    };
-    api.post('/user', userData)
-      .then(response => {
-        rows.value.push(response.data);
-        createDialog.value.visible = false;
-      })
-      .catch(error => {
-        console.error("Erro ao criar nova editora:", error);
-      });
+  // Apenas o valor da role é enviado
+  const { role, ...rest } = userToCreate.value;
+  api.post('/user', { ...rest, role: role })
+    .then(response => {
+      rows.value.push(response.data);
+      createDialog.value.visible = false;
+    })
+    .catch(error => {
+      console.error("Erro ao criar novo usuário:", error);
+    });
 };
 
 const clearSearch = () => {

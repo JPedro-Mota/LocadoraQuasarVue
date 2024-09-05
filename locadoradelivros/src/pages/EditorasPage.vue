@@ -144,8 +144,8 @@ const text = ref('');
 const getTable = (inputSearch = '') => {
   api.get('/publisher', { params: { search: inputSearch } })
     .then(response => {
-      if (Array.isArray(response.data.content)) {
-        rows.value = response.data.content;
+      if (Array.isArray(response.data)) {
+        rows.value = response.data;
         console.log("Dados obtidos com sucesso");
       } else {
         console.error('A resposta da API não é um array:', response.data);
@@ -224,19 +224,21 @@ const publisherToEdit = ref({
 
 const saveEdit = () => {
   console.log("Dados antes de salvar a edição:", publisherToEdit.value);
-  const index = rows.value.findIndex(r => r.id === editDialog.value.data.id);
-  if (index !== -1) {
-    api.put( `/publisher`, {...publisherToEdit.value})
-      .then(response => {
-        console.log("Resposta da API ao salvar a edição:", response.data);
+  publisherToEdit.value.telephone = parseInt(publisherToEdit.value.telephone, 10);
+  api.put(`/publisher/${publisherToEdit.value.id}`, { ...publisherToEdit.value })
+    .then(response => {
+      console.log("Resposta da API ao salvar a edição:", response.data);
+      const index = rows.value.findIndex(r => r.id === publisherToEdit.value.id);
+      if (index !== -1) {
         rows.value[index] = { ...response.data };
         editDialog.value.visible = false;
-      })
-      .catch(error => {
-        console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
-      });
-  }
+      }
+    })
+    .catch(error => {
+      console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
+    });
 };
+
 
 const confirmDelete = () => {
   const index = rows.value.findIndex(r => r.id === deleteDialog.value.data.id);

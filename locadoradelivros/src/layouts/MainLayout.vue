@@ -1,9 +1,9 @@
 <template>
-  <q-layout view="lHh Lpr lFf" v-if="log">
+  <q-layout view="lHh Lpr lFf" v-if="token">
     <q-header class="transparent-header">
       <q-toolbar class="transparent-toolbar">
         <q-toolbar-title>
-          <img src="../assets/altislab.png" alt="" width="150px" />
+          <img src="../assets/altislab.png" alt="AltisLab Logo" width="150px" />
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -34,9 +34,12 @@
           :key="link.title"
           v-bind="link"
         />
-
       </q-list>
-      <q-item clickable exact class="q-mx-auto q-mb-sm logout" @click="handleLogout">
+
+
+      <q-space />
+
+      <q-item clickable exact class="q-mx-auto q-mb-sm logout" @click="logout">
         <q-item-section avatar>
           <q-icon name="logout" />
         </q-item-section>
@@ -54,7 +57,7 @@
   <q-layout v-else class="centered-layout">
     <div class="form-container q-pa-md">
       <div class="form-title">
-        <img src="../assets/altislab.png" alt="" width="200px" />
+        <img src="../assets/altislab.png" alt="AltisLab Logo" width="200px" />
       </div>
       <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
         <q-input
@@ -64,7 +67,7 @@
           v-model="name"
           label="Digite seu nome*"
           lazy-rules
-          :rules="[val => val && val.length > 0 || 'Please type something']"
+          :rules="[val => val && val.length > 0 || 'Por favor, digite algo']"
         />
         <q-input
           bg-color="grey-5"
@@ -72,78 +75,39 @@
           standout
           type="password"
           v-model="password"
-          label="Digite sua senha *"
+          label="Digite sua senha*"
           lazy-rules
           :rules="[
-            val => val !== null && val !== '' || 'Please type your password',
-            val => val.length >= 6 || 'Password must be at least 6 characters'
+            val => val && val.length > 0 || 'Por favor, digite sua senha',
+            val => val.length >= 6 || 'A senha deve ter pelo menos 6 caracteres'
           ]"
         />
         <div class="btn-form">
-          <q-btn rounded label="Confirmar" type="submit" style="font-size: 14px; padding: 10px 20px; background-color: #220127; color: white;" />
+          <q-btn
+            rounded
+            label="Confirmar"
+            type="submit"
+            style="font-size: 14px; padding: 10px 20px; background-color: #220127; color: white;"
+          />
         </div>
       </q-form>
     </div>
   </q-layout>
 </template>
 
-<style scoped>
-.transparent-header {
-  background: transparent;
-  box-shadow: none !important;
-}
-.transparent-toolbar {
-  box-shadow: none !important;
-}
-.space {
-  height: 150px;
-}
-.centered-layout {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-.form-container {
-  width: 100%;
-  max-width: 500px;
-  padding: 2em;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-.form-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 30px;
-}
-.btn-form {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.q-drawer {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-</style>
-
 <script setup>
 import { ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
 import { useQuasar } from 'quasar'
-import axios from 'axios'
+import { api } from 'src/boot/axios'
 
 const $q = useQuasar()
 
 const name = ref(null)
 const password = ref(null)
-const log = ref(false)
 const drawer = ref(false)
 const miniSidebar = ref(false)
+const token = ref(localStorage.getItem('authToken'))
 
 const linksList = [
   {
@@ -188,20 +152,22 @@ function toggleSidebar() {
 
 function onSubmit() {
   if (name.value && password.value) {
-    axios.post("https://livraria-api.altislabtech.com.br/auth/login", {
-      username: name.value,
+    api.post("/auth/login", {
+      name: name.value,
       password: password.value
     })
     .then(response => {
-      log.value = true
-      name.value = null
-      password.value = null
+      localStorage.setItem('authToken', response.data.token);
+      token.value = response.data.token;
+      name.value = null;
+      password.value = null;
+      window.location.reload();
     })
     .catch(error => {
-      showNotification('negative', 'Algo deu errado!')
+      showNotification('negative', 'Algo deu errado! Tente novamente.');
     })
   } else {
-    showNotification('negative', 'Preencha os campos corretamente')
+    showNotification('negative', 'Preencha os campos corretamente.');
   }
 }
 
@@ -210,9 +176,10 @@ function onReset() {
   password.value = null
 }
 
-function handleLogout() {
-  log.value = false
-  showNotification('positive', 'Logout realizado com sucesso!')
+function logout() {
+  localStorage.removeItem('authToken');
+  token.value = null;
+  window.location.reload();
 }
 
 function showNotification(color, message) {
@@ -224,3 +191,47 @@ function showNotification(color, message) {
   })
 }
 </script>
+
+<style scoped>
+.transparent-header {
+  background: transparent;
+  box-shadow: none !important;
+}
+.transparent-toolbar {
+  box-shadow: none !important;
+}
+.space {
+  height: 150px;
+}
+.centered-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.form-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 2em;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+.form-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+.btn-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.q-drawer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+</style>

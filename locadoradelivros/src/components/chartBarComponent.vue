@@ -28,16 +28,16 @@ const fetchData = async () => {
   try {
     await authenticate();
 
-    const totalResponse = await api.get('/rent');
+    const totalResponse = await api.get('/rentsQuantity');
     rentsQtd.value = totalResponse.data.totalElements;
 
-    const inTimeResponse = await api.get('/rent', { params: { status: 'IN_TIME' } });
+    const inTimeResponse = await api.get('/rentsQuantity');
     inTime.value = inTimeResponse.data.totalElements;
 
-    const deliveredResponse = await api.get('/rent', { params: { status: 'DELIVERED' } });
+    const deliveredResponse = await api.get('/rentsQuantity');
     delivered.value = deliveredResponse.data.totalElements;
 
-    const delayedResponse = await api.get('/rent', { params: { status: 'DELAYED' } });
+    const delayedResponse = await api.get('/deliveredWithDelayQuantity' );
     delayed.value = delayedResponse.data.totalElements;
 
   } catch (error) {

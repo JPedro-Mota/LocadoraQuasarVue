@@ -12,17 +12,18 @@ import { onMounted, ref } from 'vue';
 import Chart from 'chart.js/auto';
 import { api, authenticate } from 'src/boot/axios';
 
-const mostRentedBooks = ref([]);
+const mostRented1 = ref('');
+const mostRented2 = ref('');
+const mostRented3 = ref('');
 
 const getRents = async () => {
   try {
-    await authenticate();
-    for (let i = 1; i <= 3; i++) {
-      const response = await api.get(`/rent/most-rented/${i}`);
-      mostRentedBooks.value.push(response.data);
-    }
+      const response = await api.get('/dashboard/bookMoreRented');
+      mostRented1.value = response.data[0];
+       mostRented2.value = response.data[1];
+      mostRented3.value = response.data[2];
   } catch (error) {
-    console.error("Erro ao obter dados:", error);
+    console.error("Erro ao obter dadosllllllllll:", error);
   }
 };
 
@@ -34,9 +35,9 @@ onMounted(async () => {
   new Chart(ctx1, {
     type: 'doughnut',
     data: {
-      labels: mostRentedBooks.value.map(book => book.bookName),
+      labels: [mostRented1.value.name, mostRented2.value.name, mostRented3.value.name],
       datasets: [{
-        data: mostRentedBooks.value.map(book => book.rentedNumber),
+        data: [mostRented1.value.totalRents, mostRented2.value.totalRents, mostRented3.value.totalRents],
         backgroundColor: ['rgb(217, 2, 9)', 'rgb(54, 162, 235)', 'rgb(34, 1, 39)'],
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1

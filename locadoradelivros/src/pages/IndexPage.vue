@@ -28,19 +28,17 @@ onMounted(() => {
 });
 
 const columns = [
-  { name: 'id', align: 'center', label: 'Locatário', field: 'id' },
-  { name: 'name', align: 'center', label: 'Livro', field: 'name' },
-  { name: 'totalRents', align: 'center', label: 'Alugado', field: 'totalRents' },
-  { name: 'activeRents', align: 'center', label: 'Devolução', field: 'activeRents' },
+  { name: 'name', align: 'center', label: 'Locatário', field: 'name' },
+  { name: 'rentsQuantity', align: 'center', label: 'Devolução', field: 'rentsQuantity' },
+  { name: 'rentsActive', align: 'center', label: 'Alugado', field: 'rentsActive' },
 ];
 
 const rows = ref([]);
 
 const getTable = async () => {
   try {
-    await authenticate();
 
-    const response = await api.get('/rent/renters');
+    const response = await api.get('dashboard/rentsPerRenter');
 
     if (Array.isArray(response.data)) {
       rows.value = response.data

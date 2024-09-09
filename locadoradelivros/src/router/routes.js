@@ -3,7 +3,7 @@ const routes = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/IndexPage.vue') }
+      { path: '', name:'login', component: () => import('pages/IndexPage.vue') }
     ]
   },
 
@@ -54,6 +54,18 @@ const routes = [
       { path: '', name: 'locatarioteste', component: () => import('pages/LocatariosPage.vue') }
     ]
   },
+
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('pages/ResetPasswordPage.vue')
+    },
+
+    {
+      path: '/recovery-password',
+      name: 'recovery-password',
+      component: () => import('pages/RecoveryPasswordPage.vue')
+    },
 
   {
     path: '/:catchAll(.*)*',

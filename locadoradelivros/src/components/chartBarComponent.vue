@@ -26,24 +26,25 @@ const delayed = ref(0);
 
 const fetchData = async () => {
   try {
-    await authenticate();
 
-    const totalResponse = await api.get('/rentsQuantity');
-    rentsQtd.value = totalResponse.data.totalElements;
+    const response = await api.get('/dashboard/rentsQuantity');
+    rentsQtd.value = response.data;
 
-    const inTimeResponse = await api.get('/rentsQuantity');
-    inTime.value = inTimeResponse.data.totalElements;
+    const delayedResponse = await api.get('/dashboard/deliveredWithDelayQuantity');
+    delayed.value = delayedResponse.data;
 
-    const deliveredResponse = await api.get('/rentsQuantity');
-    delivered.value = deliveredResponse.data.totalElements;
+    const inTimeResponse = await api.get('/dashboard/rentsInTime');
+    inTime.value = inTimeResponse.data;
 
-    const delayedResponse = await api.get('/deliveredWithDelayQuantity' );
-    delayed.value = delayedResponse.data.totalElements;
+    const lateQuantityResponse = await api.get('/dashboard/rentsLateQuantity');
+    delivered.value = lateQuantityResponse.data;
 
+    console.log(rentsQtd.value, delayed.value, inTime.value, delivered.value);
   } catch (error) {
     console.error("Erro ao obter dados:", error);
   }
 };
+
 
 onMounted(async () => {
   await fetchData();

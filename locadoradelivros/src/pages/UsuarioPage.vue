@@ -26,7 +26,6 @@
           <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
           <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
 
-          <!-- Diálogo de Visualização -->
           <q-dialog v-model="viewDialog.visible" persistent>
             <q-card>
               <q-card-section>
@@ -43,7 +42,6 @@
             </q-card>
           </q-dialog>
 
-          <!-- Diálogo de Edição -->
           <q-dialog v-model="editDialog.visible" persistent>
             <q-card>
               <q-card-section>
@@ -62,7 +60,6 @@
             </q-card>
           </q-dialog>
 
-          <!-- Diálogo de Exclusão -->
           <q-dialog v-model="deleteDialog.visible" persistent>
             <q-card>
               <q-card-section>
@@ -78,7 +75,6 @@
             </q-card>
           </q-dialog>
 
-          <!-- Diálogo de Criação -->
           <q-dialog v-model="createDialog.visible" persistent>
             <q-card>
               <q-card-section>
@@ -88,7 +84,7 @@
                 <q-input v-model="userToCreate.name" label="Nome" />
                 <q-input v-model="userToCreate.email" label="Email" />
                 <q-input v-model="userToCreate.password" label="Senha" type="password" />
-                <q-select filled v-model="userToCreate.role" :options="options" label="Nível de acesso" />
+                <q-select filled v-model="userToCreate.role" :options="options" label="Nível de acesso"  emit-value map-options/>
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveNewUser" />
@@ -234,7 +230,6 @@ const confirmDelete = () => {
 };
 
 const saveNewUser = () => {
-  // Apenas o valor da role é enviado
   const { role, ...rest } = userToCreate.value;
   api.post('/user', { ...rest, role: role })
     .then(response => {

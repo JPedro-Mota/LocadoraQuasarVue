@@ -21,8 +21,9 @@
     </div>
     <TableComponents :columns="columns" :rows="filteredRows">
       <template #actions="{ row }">
-        <div class="dialogsa">
+        <div class="dialogs">
           <q-btn flat round dense icon="check" @click="openConfirmDialog(row)" class="actions-bt" />
+          <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
 
           <q-dialog v-model="confirmDialog.visible" persistent>
             <q-card>
@@ -48,7 +49,7 @@
                 <q-form @submit="onSubmit" class="q-gutter-md q-my-auto">
                   <q-input v-model="newRent.renterId" label="Id do locatário" />
                   <q-input v-model="newRent.bookId" label="Id do livro" />
-                  <q-input v-model="newRent.deadline" label="Prazo final" type="date" />
+                  <q-input v-model="newRent.deadLine" label="Prazo final" type="date" />
                 </q-form>
               </q-card-section>
               <q-card-actions align="right">
@@ -86,7 +87,7 @@ const text = ref('');
 const getTable = (inputSearch = '') => {
   api.get('/rents', { params: { search: inputSearch } })
     .then(response => {
-      console.log("Dados obtidos:", response.data); 
+      console.log("Dados obtidos:", response.data);
       if (Array.isArray(response.data)) {
         rows.value = response.data;
       } else {
@@ -107,7 +108,7 @@ const confirmDialog = ref({
 const newRent = ref({
   renterId: 0,
   bookId: 0,
-  deadline: ''
+  deadLine: ''
 });
 
 const createDialog = ref({
@@ -138,11 +139,22 @@ const confirmUpdateStatus = () => {
 };
 
 const openCreateDialog = () => {
-  newRent.value = { renterId: '', bookId: '', deadline: '' };
+  newRent.value = { renterId: '', bookId: '', deadLine: '' };
   createDialog.value.visible = true;
 };
 
+const openEditDialog = () => {
+  getApi(row.id);
+  openEditDialog.value.data = {...row};
+  rentsToEdit.value = {
+    
+  }
+}
+
 const saveNewRent = () => {
+  newRent.value.renterId = parseInt(newRent.value.renterId, 10);
+  newRent.value.bookId = parseInt(newRent.value.bookId, 10);
+
   api.post('/rents', newRent.value)
     .then(response => {
       rows.value.push(response.data);
@@ -152,6 +164,7 @@ const saveNewRent = () => {
       console.error("Erro ao criar novo aluguel:", error.response ? error.response.data : error.message);
     });
 };
+
 
 const clearSearch = () => {
   text.value = '';

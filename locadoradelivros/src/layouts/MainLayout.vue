@@ -90,6 +90,10 @@
             style="font-size: 14px; padding: 10px 20px; background-color: #220127; color: white;"
           />
         </div>
+
+      <div class="link-text">
+        <router-link to="/reset-password" class="link">Esqueceu a senha?</router-link>
+      </div>
       </q-form>
     </div>
   </q-layout>
@@ -233,5 +237,13 @@ function showNotification(color, message) {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.link-text{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+
 }
 </style>

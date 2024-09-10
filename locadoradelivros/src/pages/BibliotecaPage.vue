@@ -27,7 +27,7 @@
           <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
 
           <q-dialog v-model="viewDialog.visible" persistent>
-            <q-card>
+            <q-card style="max-width: 300px;">
               <q-card-section>
                 <div class="text-h6">Detalhes da Biblioteca</div>
               </q-card-section>
@@ -46,7 +46,7 @@
           </q-dialog>
 
           <q-dialog v-model="editDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 300px;">
               <q-card-section>
                 <div class="text-h6">Editar Livro</div>
               </q-card-section>
@@ -84,9 +84,9 @@
           </q-dialog>
 
           <q-dialog v-model="createDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 400px;">
               <q-card-section>
-                <div class="text-h6">Cadastrar Livro</div>
+                <div class="text-h6" style="display: flex; justify-content: center;">Cadastro de livro</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
                 <q-form @submit.prevent="saveNewBook" class="q-gutter-md q-my-auto">
@@ -143,6 +143,9 @@
 import { onMounted, ref, computed } from 'vue';
 import TableComponents from '../components/TableComponents.vue';
 import { api } from 'src/boot/axios';
+import { useQuasar } from 'quasar';
+
+const $q = useQuasar();
 
 const columns = [
   { name: 'name', required: true, label: 'Nome', align: 'center', field: row => row.name, sortable: true },
@@ -176,6 +179,11 @@ const getTable = (inputSearch = '') => {
     })
     .catch(error => {
       console.error("Erro ao obter dados:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao obter dados. Tente novamente.',
+        icon: 'warning',
+      });
     });
 }
 
@@ -191,6 +199,11 @@ const getPublishers = () => {
     })
     .catch(error => {
       console.error("Erro ao obter publishers:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao obter editoras. Tente novamente.',
+        icon: 'warning',
+      });
     });
 };
 
@@ -199,79 +212,96 @@ onMounted(() => {
   getPublishers();
 });
 
-const getApi = (id) => {
+const getDataById = (id) => {
   api.get(`/book/${id}`)
     .then(response => {
       InfosEdit.value = response.data;
-      console.log(InfosEdit.value);
     })
     .catch(error => {
-      console.error("Erro", error);
+      console.error("Erro ao obter dados:", error);
     });
 }
 
+const saveNewBook = () => {
+  api.post('/book', newBook.value)
+    .then(response => {
+      $q.notify({
+        type: 'positive',
+        message: 'Livro criado com sucesso!',
+        icon: 'check_circle',
+      });
+      getTable();
+      createDialog.value.visible = false;
+      newBook.value = { name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' };
+    })
+    .catch(error => {
+      console.error("Erro ao criar novo livro:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao criar novo livro. Tente novamente.',
+        icon: 'warning',
+      });
+    });
+}
+
+const openCreateDialog = () => {
+  createDialog.value.visible = true;
+};
+
 const openViewDialog = (row) => {
-  getApi(row.id);
+  getDataById(row.id);
   viewDialog.value.visible = true;
 };
 
 const openEditDialog = (row) => {
-  getApi(row.id);
-  editDialog.value.data = { ...row };
   bookToEdit.value = { ...row };
   editDialog.value.visible = true;
 };
 
-const openCreateDialog = () => {
-  newBook.value = { name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' };
-  createDialog.value.visible = true;
-}
-
-const openDeleteDialog = (row) => {
-  deleteDialog.value.data = { ...row };
-  deleteDialog.value.visible = true;
-};
-
 const saveEdit = () => {
-  console.log("Dados antes de salvar a edição:", bookToEdit.value);
-  api.put(`/book/${bookToEdit.value.id}`, { ...bookToEdit.value, publisherId: Number(bookToEdit.value.publisherId) })
+  api.put(`/book/${bookToEdit.value.id}`, bookToEdit.value)
     .then(response => {
-      console.log("Resposta da API ao salvar a edição:", response.data);
-      const index = rows.value.findIndex(r => r.id === bookToEdit.value.id);
-      if (index !== -1) {
-        rows.value[index] = { ...response.data };
-      }
+      $q.notify({
+        type: 'positive',
+        message: 'Livro atualizado com sucesso!',
+        icon: 'check_circle',
+      });
+      getTable();
       editDialog.value.visible = false;
     })
     .catch(error => {
-      console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
+      console.error("Erro ao editar livro:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao editar livro. Tente novamente.',
+        icon: 'warning',
+      });
     });
 };
 
-const confirmDelete = () => {
-  const index = rows.value.findIndex(r => r.id === deleteDialog.value.data.id);
-  if (index !== -1) {
-    api.delete(`/book/${deleteDialog.value.data.id}`)
-      .then(() => {
-        rows.value.splice(index, 1);
-        deleteDialog.value.visible = false;
-      })
-      .catch(error => {
-        console.error("Erro ao excluir:", error);
-      });
-  }
+const openDeleteDialog = (row) => {
+  deleteDialog.value.visible = true;
+  deleteDialog.value.data = { ...row };
 };
 
-const saveNewBook = () => {
-  console.log("Tentando criar novo livro com:", newBook.value);
-  api.post('/book', { ...newBook.value, publisherId: Number(newBook.value.publisherId) })
+const confirmDelete = () => {
+  api.delete(`/book/${deleteDialog.value.data.id}`)
     .then(response => {
-      console.log("Livro criado com sucesso:", response.data);
-      rows.value.push(response.data);
-      createDialog.value.visible = false;
+      $q.notify({
+        type: 'positive',
+        message: 'Livro excluído com sucesso!',
+        icon: 'check_circle',
+      });
+      getTable();
+      deleteDialog.value.visible = false;
     })
     .catch(error => {
-      console.error("Erro ao criar novo livro:", error.response ? error.response.data : error.message);
+      console.error("Erro ao excluir livro:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao excluir livro. Tente novamente.',
+        icon: 'warning',
+      });
     });
 };
 
@@ -281,13 +311,6 @@ const clearSearch = () => {
 };
 
 const filteredRows = computed(() => {
-  if (!text.value) {
-    return rows.value;
-  }
-  return rows.value.filter(row =>
-    Object.values(row).some(value =>
-      value.toString().toLowerCase().includes(text.value.toLowerCase())
-    )
-  );
+  return rows.value.filter(row => row.name.toLowerCase().includes(text.value.toLowerCase()));
 });
 </script>

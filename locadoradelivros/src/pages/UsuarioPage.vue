@@ -27,7 +27,7 @@
           <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
 
           <q-dialog v-model="viewDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 300px;">
               <q-card-section>
                 <div class="text-h6">Detalhes de Usuário</div>
               </q-card-section>
@@ -43,7 +43,7 @@
           </q-dialog>
 
           <q-dialog v-model="editDialog.visible" persistent>
-            <q-card>
+            <q-card style="width: 400px; max-width: 100%;">
               <q-card-section>
                 <div class="text-h6">Editar Usuário</div>
               </q-card-section>
@@ -76,7 +76,7 @@
           </q-dialog>
 
           <q-dialog v-model="createDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 450px;">
               <q-card-section>
                 <div class="text-h6">Cadastrar Usuário</div>
               </q-card-section>
@@ -125,8 +125,11 @@
 
 <script setup>
 import { onMounted, ref, computed } from 'vue';
+import { useQuasar } from 'quasar';
 import TableComponents from '../components/TableComponents.vue';
 import { api } from 'src/boot/axios';
+
+const $q = useQuasar();
 
 onMounted(() => {
   getTable();
@@ -207,11 +210,19 @@ const saveEdit = () => {
       const index = rows.value.findIndex(r => r.id === userToEdit.value.id);
       if (index !== -1) {
         rows.value[index] = { ...response.data };
+        $q.notify({
+          type: 'positive',
+          message: 'Usuário atualizado com sucesso!'
+        });
       }
       editDialog.value.visible = false;
     })
     .catch(error => {
       console.error("Erro ao salvar edição:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao atualizar o usuário.'
+      });
     });
 };
 
@@ -221,10 +232,18 @@ const confirmDelete = () => {
     api.delete(`/user/${deleteDialog.value.data.id}`)
       .then(() => {
         rows.value.splice(index, 1);
+        $q.notify({
+          type: 'positive',
+          message: 'Usuário excluído com sucesso!'
+        });
         deleteDialog.value.visible = false;
       })
       .catch(error => {
         console.error("Erro ao excluir:", error);
+        $q.notify({
+          type: 'negative',
+          message: 'Erro ao excluir o usuário.'
+        });
       });
   }
 };
@@ -234,10 +253,18 @@ const saveNewUser = () => {
   api.post('/user', { ...rest, role: role })
     .then(response => {
       rows.value.push(response.data);
+      $q.notify({
+        type: 'positive',
+        message: 'Usuário criado com sucesso!'
+      });
       createDialog.value.visible = false;
     })
     .catch(error => {
       console.error("Erro ao criar novo usuário:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao criar novo usuário.'
+      });
     });
 };
 

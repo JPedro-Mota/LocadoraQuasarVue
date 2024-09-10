@@ -23,10 +23,8 @@
       <template #actions="{ row }">
         <div class="dialogs">
           <q-btn flat round dense icon="check" @click="openConfirmDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
-
           <q-dialog v-model="confirmDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 100px;">
               <q-card-section>
                 <div class="text-h6">Confirmar Atualização de Status</div>
               </q-card-section>
@@ -41,15 +39,15 @@
           </q-dialog>
 
           <q-dialog v-model="createDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 450px;">
               <q-card-section>
-                <div class="text-h6">Cadastrar de aluguel</div>
+                <div class="text-h6" style="display:flex; justify-content: center;">Cadastro de aluguel</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
                 <q-form @submit="onSubmit" class="q-gutter-md q-my-auto">
-                  <q-input v-model="newRent.renterId" label="Id do locatário" />
-                  <q-input v-model="newRent.bookId" label="Id do livro" />
-                  <q-input v-model="newRent.deadLine" label="Prazo final" type="date" />
+                  <q-select v-model="newRent.renterId" :options="renters" label="Locatário" option-label="name" option-value="id" style="width: 95%;" />
+                  <q-select v-model="newRent.bookId" :options="books" label="Livro" option-label="name" option-value="id" style="width: 95%;" />
+                  <q-input v-model="newRent.deadLine" label="Prazo final" type="date" style="width: 95%;" />
                 </q-form>
               </q-card-section>
               <q-card-actions align="right">
@@ -68,9 +66,14 @@
 import { onMounted, ref, computed } from 'vue';
 import TableComponents from '../components/TableComponents.vue';
 import { api } from 'src/boot/axios';
+import { useQuasar } from 'quasar';
+
+const $q = useQuasar();
 
 onMounted(() => {
   getTable();
+  fetchRenters();
+  fetchBooks();
 });
 
 const columns = [
@@ -83,20 +86,51 @@ const columns = [
 
 const rows = ref([]);
 const text = ref('');
+const renters = ref([]);
+const books = ref([]);
 
 const getTable = (inputSearch = '') => {
   api.get('/rents', { params: { search: inputSearch } })
     .then(response => {
-      console.log("Dados obtidos:", response.data);
-      if (Array.isArray(response.data)) {
-        rows.value = response.data;
-      } else {
-        console.error('A resposta da API não é um array:', response.data);
-        rows.value = [];
-      }
+      rows.value = Array.isArray(response.data) ? response.data : [];
     })
     .catch(error => {
       console.error("Erro ao obter dados:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao obter os aluguéis. Tente novamente mais tarde.',
+        icon: 'warning',
+      });
+    });
+};
+
+const fetchRenters = () => {
+  api.get('/renter')
+    .then(response => {
+      renters.value = response.data;
+    })
+    .catch(error => {
+      console.error("Erro ao obter locatários:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao obter os locatários. Tente novamente mais tarde.',
+        icon: 'warning',
+      });
+    });
+};
+
+const fetchBooks = () => {
+  api.get('/book')
+    .then(response => {
+      books.value = response.data;
+    })
+    .catch(error => {
+      console.error("Erro ao obter livros:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao obter os livros. Tente novamente mais tarde.',
+        icon: 'warning',
+      });
     });
 };
 
@@ -126,15 +160,24 @@ const confirmUpdateStatus = () => {
   const updatedStatus = "DELIVERED";
   api.put(`/rents/${row.id}`, { ...row, status: updatedStatus })
     .then(response => {
-      console.log("Status atualizado com sucesso:", response.data);
       const index = rows.value.findIndex(r => r.id === row.id);
       if (index !== -1) {
         rows.value[index].status = updatedStatus;
       }
+      $q.notify({
+        type: 'positive',
+        message: 'Status atualizado com sucesso!',
+        icon: 'check',
+      });
       confirmDialog.value.visible = false;
     })
     .catch(error => {
       console.error("Erro ao atualizar status:", error.response ? error.response.data : error.message);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao atualizar o status. Tente novamente mais tarde.',
+        icon: 'warning',
+      });
     });
 };
 
@@ -142,14 +185,6 @@ const openCreateDialog = () => {
   newRent.value = { renterId: '', bookId: '', deadLine: '' };
   createDialog.value.visible = true;
 };
-
-const openEditDialog = () => {
-  getApi(row.id);
-  openEditDialog.value.data = {...row};
-  rentsToEdit.value = {
-    
-  }
-}
 
 const saveNewRent = () => {
   newRent.value.renterId = parseInt(newRent.value.renterId, 10);
@@ -159,12 +194,21 @@ const saveNewRent = () => {
     .then(response => {
       rows.value.push(response.data);
       createDialog.value.visible = false;
+      $q.notify({
+        type: 'positive',
+        message: 'Novo aluguel criado com sucesso!',
+        icon: 'check',
+      });
     })
     .catch(error => {
       console.error("Erro ao criar novo aluguel:", error.response ? error.response.data : error.message);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao criar o aluguel. Tente novamente mais tarde.',
+        icon: 'warning',
+      });
     });
 };
-
 
 const clearSearch = () => {
   text.value = '';
@@ -187,10 +231,12 @@ const onSubmit = () => {
 };
 </script>
 
+
 <style>
 .title {
   padding-left: 40px;
 }
+
 .actions-bt {
   background: none;
   border: none;
@@ -203,12 +249,22 @@ const onSubmit = () => {
   align-items: center;
   justify-content: space-between;
 }
+
 .input-field {
   flex: 1;
 }
+
 .button-field {
   margin-left: 10px;
   padding: 7px;
   margin-bottom: 2%;
+}
+
+.q-card {
+  min-width: 500px;
+}
+
+.text-h6 {
+  text-align: center;
 }
 </style>

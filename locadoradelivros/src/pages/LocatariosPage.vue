@@ -26,6 +26,7 @@
           <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
           <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
 
+          <!-- View Dialog -->
           <q-dialog v-model="viewDialog.visible" persistent>
             <q-card>
               <q-card-section>
@@ -45,8 +46,9 @@
             </q-card>
           </q-dialog>
 
+          <!-- Edit Dialog -->
           <q-dialog v-model="editDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 400px;">
               <q-card-section>
                 <div class="text-h6">Editar Locatário</div>
               </q-card-section>
@@ -64,8 +66,9 @@
             </q-card>
           </q-dialog>
 
+          <!-- Delete Dialog -->
           <q-dialog v-model="deleteDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 300px;">
               <q-card-section>
                 <div class="text-h6">Confirmar Exclusão</div>
               </q-card-section>
@@ -79,8 +82,9 @@
             </q-card>
           </q-dialog>
 
+          <!-- Create Dialog -->
           <q-dialog v-model="createDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 400px;">
               <q-card-section>
                 <div class="text-h6">Cadastrar Locatário</div>
               </q-card-section>
@@ -133,7 +137,10 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue';
 import TableComponents from '../components/TableComponents.vue';
-import { api, authenticate } from 'src/boot/axios';
+import { api } from 'src/boot/axios';
+import { useQuasar } from 'quasar';
+
+const $q = useQuasar();
 
 onMounted(() => {
     getTable();
@@ -152,15 +159,18 @@ const getTable = (inputSearch = '') => {
     .then(response => {
       if (Array.isArray(response.data)) {
         rows.value = response.data;
-        console.log(response.data);
       } else {
         console.error('A resposta da API não é um array:', response.data);
         rows.value = [];
       }
-      console.log('Resposta da API:', response.data);
     })
     .catch(error => {
-      console.error("aaaaaaaaaaaaaaaaaaaaaaaaa:", error);
+      console.error("Erro ao buscar dados:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao buscar dados: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 }
 
@@ -174,7 +184,12 @@ const getApi = (id) => {
       renterToEdit.value = response.data;
     })
     .catch(error => {
-      console.error("Erro", error);
+      console.error("Erro ao buscar dados do locatário:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao buscar dados do locatário: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 }
 
@@ -223,9 +238,9 @@ const renterToEdit = ref({
   id: 0,
   name: '',
   email: '',
-  telephone: 0,
+  telephone: '',
   address: '',
-  cpf: 0
+  cpf: ''
 });
 
 const saveEdit = () => {
@@ -236,9 +251,19 @@ const saveEdit = () => {
         rows.value[index] = { ...renterToEdit.value };
       }
       editDialog.value.visible = false;
+      $q.notify({
+        type: 'positive',
+        message: 'Locatário editado com sucesso!',
+        position: 'top-right'
+      });
     })
     .catch(error => {
       console.error("Erro ao salvar edição:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao salvar edição: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 };
 
@@ -249,23 +274,41 @@ const confirmDelete = () => {
       .then(() => {
         rows.value.splice(index, 1);
         deleteDialog.value.visible = false;
+        $q.notify({
+          type: 'positive',
+          message: 'Locatário excluído com sucesso!',
+          position: 'top-right'
+        });
       })
       .catch(error => {
         console.error("Erro ao excluir:", error);
+        $q.notify({
+          type: 'negative',
+          message: 'Erro ao excluir locatário: ' + (error.response ? error.response.data.message : error.message),
+          position: 'top-right'
+        });
       });
   }
 };
 
 const saveNewRenter = () => {
-  console.log("Tentando criar novo locatário com:", newRenter.value);
   api.post('/renter', newRenter.value)
     .then(response => {
-      console.log("Locatário criado com sucesso:", response.data);
       rows.value.push(response.data);
       createDialog.value.visible = false;
+      $q.notify({
+        type: 'positive',
+        message: 'Locatário criado com sucesso!',
+        position: 'top-right'
+      });
     })
     .catch(error => {
-      console.error("Erro ao criar novo locatário:", error.response ? error.response.data : error.message);
+      console.error("Erro ao criar novo locatário:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao criar locatário: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 };
 

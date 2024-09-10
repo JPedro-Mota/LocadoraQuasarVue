@@ -27,7 +27,7 @@
           <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
 
           <q-dialog v-model="viewDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 300px;">
               <q-card-section>
                 <div class="text-h6">Detalhes da Editora</div>
               </q-card-section>
@@ -62,7 +62,7 @@
           </q-dialog>
 
           <q-dialog v-model="deleteDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 200px;">
               <q-card-section>
                 <div class="text-h6">Confirmar Exclusão</div>
               </q-card-section>
@@ -77,7 +77,7 @@
           </q-dialog>
 
           <q-dialog v-model="createDialog.visible" persistent>
-            <q-card>
+            <q-card style="min-width: 400px;">
               <q-card-section>
                 <div class="text-h6">Cadastrar Editora</div>
               </q-card-section>
@@ -127,7 +127,10 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue';
 import TableComponents from '../components/TableComponents.vue';
-import { api, authenticate } from 'src/boot/axios';
+import { api } from 'src/boot/axios';
+import { useQuasar } from 'quasar';
+
+const $q = useQuasar();
 
 onMounted(() => {
   getTable();
@@ -146,15 +149,29 @@ const getTable = (inputSearch = '') => {
     .then(response => {
       if (Array.isArray(response.data)) {
         rows.value = response.data;
-        console.log("Dados obtidos com sucesso");
+        $q.notify({
+          type: 'positive',
+          message: 'Dados carregados com sucesso!',
+          position: 'top-right'
+        });
       } else {
         console.error('A resposta da API não é um array:', response.data);
         rows.value = [];
+        $q.notify({
+          type: 'negative',
+          message: 'Dados retornados não são válidos.',
+          position: 'top-right'
+        });
       }
       console.log('Resposta da API:', response.data);
     })
     .catch(error => {
       console.error("Erro ao obter dados:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 }
 
@@ -170,6 +187,11 @@ const getApi = (id) => {
     })
     .catch(error => {
       console.error("Erro", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao obter dados da editora: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 }
 
@@ -232,13 +254,22 @@ const saveEdit = () => {
       if (index !== -1) {
         rows.value[index] = { ...response.data };
         editDialog.value.visible = false;
+        $q.notify({
+          type: 'positive',
+          message: 'Editora editada com sucesso!',
+          position: 'top-right'
+        });
       }
     })
     .catch(error => {
       console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao editar a editora: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 };
-
 
 const confirmDelete = () => {
   const index = rows.value.findIndex(r => r.id === deleteDialog.value.data.id);
@@ -247,9 +278,19 @@ const confirmDelete = () => {
       .then(() => {
         rows.value.splice(index, 1);
         deleteDialog.value.visible = false;
+        $q.notify({
+          type: 'positive',
+          message: 'Editora excluída com sucesso!',
+          position: 'top-right'
+        });
       })
       .catch(error => {
         console.error("Erro ao excluir:", error);
+        $q.notify({
+          type: 'negative',
+          message: 'Erro ao excluir a editora: ' + (error.response ? error.response.data.message : error.message),
+          position: 'top-right'
+        });
       });
   }
 };
@@ -259,9 +300,19 @@ const saveNewPublisher = () => {
     .then(response => {
       rows.value.push(response.data);
       createDialog.value.visible = false;
+      $q.notify({
+        type: 'positive',
+        message: 'Editora criada com sucesso!',
+        position: 'top-right'
+      });
     })
     .catch(error => {
       console.error("Erro ao criar nova editora:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao criar a editora: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
     });
 };
 
@@ -271,13 +322,6 @@ const clearSearch = () => {
 };
 
 const filteredRows = computed(() => {
-  if (!text.value) {
-    return rows.value;
-  }
-  return rows.value.filter(row =>
-    Object.values(row).some(value =>
-      value.toString().toLowerCase().includes(text.value.toLowerCase())
-    )
-  );
+  return rows.value.filter(row => row.name.toLowerCase().includes(text.value.toLowerCase()));
 });
 </script>

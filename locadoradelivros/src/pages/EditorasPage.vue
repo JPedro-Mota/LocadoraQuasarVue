@@ -325,3 +325,4 @@ const filteredRows = computed(() => {
   return rows.value.filter(row => row.name.toLowerCase().includes(text.value.toLowerCase()));
 });
 </script>
+<!--  -->

@@ -7,11 +7,12 @@
       Editora
     </h6>
   </div>
+
   <q-page padding>
     <div class="tableHeader">
-      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field">
+      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field" @keyup.enter="getTable(text)">
         <template v-slot:prepend>
-          <q-icon name="search" @click="getTable(text)" />
+          <q-icon name="search"/>
         </template>
         <template v-slot:append>
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
@@ -19,87 +20,86 @@
       </q-input>
       <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
-    <TableComponents :columns="columns" :rows="filteredRows">
+
+    <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
-        <div class="dialogsa">
-          <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
-
-          <q-dialog v-model="viewDialog.visible" persistent>
-            <q-card style="min-width: 300px;">
-              <q-card-section>
-                <div class="text-h6">Detalhes da Editora</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
-                <div><strong>Email:</strong> {{ InfosEdit.email }}</div>
-                <div><strong>Telefone:</strong> {{ InfosEdit.telephone }}</div>
-                <div><strong>Site:</strong> {{ InfosEdit.site }}</div>
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Fechar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-
-          <q-dialog v-model="editDialog.visible" persistent>
-            <q-card>
-              <q-card-section>
-                <div class="text-h6">Editar Editora</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                <q-input v-model="publisherToEdit.name" label="Nome" />
-                <q-input v-model="publisherToEdit.email" label="Email" />
-                <q-input v-model="publisherToEdit.telephone" label="Telefone" />
-                <q-input v-model="publisherToEdit.site" label="Site" />
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-
-          <q-dialog v-model="deleteDialog.visible" persistent>
-            <q-card style="min-width: 200px;">
-              <q-card-section>
-                <div class="text-h6">Confirmar Exclusão</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                Tem certeza que deseja excluir a editora "{{ deleteDialog.data.name }}"?
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Excluir" color="primary" @click="confirmDelete" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-
-          <q-dialog v-model="createDialog.visible" persistent>
-            <q-card style="min-width: 400px;">
-              <q-card-section>
-                <div class="text-h6">Cadastrar Editora</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                <q-input v-model="newPublisher.name" label="Nome" />
-                <q-input v-model="newPublisher.email" label="Email" />
-                <q-input v-model="newPublisher.telephone" label="Telefone" />
-                <q-input v-model="newPublisher.site" label="Site" />
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Salvar" color="primary" @click="saveNewPublisher" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-        </div>
+        <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
+        <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
+        <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
       </template>
     </TableComponents>
+
+    <q-dialog v-model="createDialog.visible" persistent>
+      <q-card style="min-width: 500px;">
+        <q-card-section>
+          <div class="text-h6" style="display: flex; justify-content: center;">Cadastrar Editora</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input v-model="newPublisher.name" label="Nome" />
+          <q-input v-model="newPublisher.email" label="Email" />
+          <q-input v-model="newPublisher.telephone" label="Telefone" />
+          <q-input v-model="newPublisher.site" label="Site" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Salvar" color="primary" @click="saveNewPublisher" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="viewDialog.visible" persistent>
+      <q-card style="min-width: 300px;">
+        <q-card-section>
+          <div class="text-h6">Detalhes da Editora</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
+          <div><strong>Email:</strong> {{ InfosEdit.email }}</div>
+          <div><strong>Telefone:</strong> {{ InfosEdit.telephone }}</div>
+          <div><strong>Site:</strong> {{ InfosEdit.site }}</div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Fechar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="editDialog.visible" persistent>
+      <q-card style="min-width: 500px;">
+        <q-card-section>
+          <div class="text-h6" style="display: flex; justify-content: center;">Editar Editora</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input v-model="publisherToEdit.name" label="Nome" />
+          <q-input v-model="publisherToEdit.email" label="Email" />
+          <q-input v-model="publisherToEdit.telephone" label="Telefone" />
+          <q-input v-model="publisherToEdit.site" label="Site" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="deleteDialog.visible" persistent>
+      <q-card style="min-width: 200px;">
+        <q-card-section>
+          <div class="text-h6">Confirmar Exclusão</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          Tem certeza que deseja excluir a editora "{{ deleteDialog.data.name }}"?
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Excluir" color="primary" @click="confirmDelete" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
-<style>
+<style scoped>
 .title {
   padding-left: 40px;
 }
@@ -125,95 +125,55 @@
 </style>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { ref, onMounted} from 'vue';
 import TableComponents from '../components/TableComponents.vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
 
 const $q = useQuasar();
 
-onMounted(() => {
-  getTable();
-});
+const rows = ref([]);
+const text = ref('');
+const newPublisher = ref({ name: '', email: '', telephone: '', site: '' });
+const InfosEdit = ref({});
+const publisherToEdit = ref({ id: '', name: '', email: '', telephone: 0, site: '' });
+
+const viewDialog = ref({ visible: false });
+const editDialog = ref({ visible: false });
+const deleteDialog = ref({ visible: false });
+const createDialog = ref({ visible: false });
 
 const columns = [
   { name: 'name', required: true, label: 'Nome', align: 'center', field: row => row.name, sortable: true },
   { name: 'actions', label: 'Ações', align: 'center' }
 ];
 
-const rows = ref([]);
-const text = ref('');
-
 const getTable = (inputSearch = '') => {
   api.get('/publisher', { params: { search: inputSearch } })
     .then(response => {
       if (Array.isArray(response.data)) {
         rows.value = response.data;
-        $q.notify({
-          type: 'positive',
-          message: 'Dados carregados com sucesso!',
-          position: 'top-right'
-        });
+        $q.notify({ type: 'positive', message: 'Dados carregados com sucesso!', position: 'top-right' });
       } else {
-        console.error('A resposta da API não é um array:', response.data);
         rows.value = [];
-        $q.notify({
-          type: 'negative',
-          message: 'Dados retornados não são válidos.',
-          position: 'top-right'
-        });
+        $q.notify({ type: 'negative', message: 'Dados retornados não são válidos.', position: 'top-right' });
       }
-      console.log('Resposta da API:', response.data);
     })
     .catch(error => {
-      console.error("Erro ao obter dados:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
+      $q.notify({ type: 'negative', message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
-}
-
-const InfosEdit = ref({});
-const newPublisher = ref({ name: '', email: '', telephone: '', site: '' });
+};
 
 const getApi = (id) => {
   api.get(`/publisher/${id}`)
     .then(response => {
       InfosEdit.value = response.data;
       publisherToEdit.value = response.data;
-      console.log(InfosEdit.value);
     })
     .catch(error => {
-      console.error("Erro", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao obter dados da editora: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
+      $q.notify({ type: 'negative', message: 'Erro ao obter dados da editora: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
-}
-
-const viewDialog = ref({
-  visible: false,
-  data: {},
-});
-
-const editDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const deleteDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const createDialog = ref({
-  visible: false,
-  data: {}
-});
+};
 
 const openViewDialog = (row) => {
   getApi(row.id);
@@ -221,9 +181,8 @@ const openViewDialog = (row) => {
 };
 
 const openEditDialog = (row) => {
-  getApi(row.id);
-  editDialog.value.data = { ...row };
-  editDialog.value.visible = true;
+    publisherToEdit.value = { ...row };
+    editDialog.value.visible = true;
 };
 
 const openDeleteDialog = (row) => {
@@ -232,67 +191,34 @@ const openDeleteDialog = (row) => {
 };
 
 const openCreateDialog = () => {
-  newPublisher.value = { name: '', email: '', telephone: '', site: '' };
   createDialog.value.visible = true;
-}
-
-const publisherToEdit = ref({
-  id: '',
-  name: '',
-  email: '',
-  telephone: 0,
-  site: ''
-});
+};
 
 const saveEdit = () => {
-  console.log("Dados antes de salvar a edição:", publisherToEdit.value);
-  publisherToEdit.value.telephone = parseInt(publisherToEdit.value.telephone, 10);
-  api.put(`/publisher/${publisherToEdit.value.id}`, { ...publisherToEdit.value })
+  api.put(`/publisher/${publisherToEdit.value.id}`, publisherToEdit.value)
     .then(response => {
-      console.log("Resposta da API ao salvar a edição:", response.data);
-      const index = rows.value.findIndex(r => r.id === publisherToEdit.value.id);
+      const index = rows.value.findIndex(r => r.id === response.data.id);
       if (index !== -1) {
-        rows.value[index] = { ...response.data };
-        editDialog.value.visible = false;
-        $q.notify({
-          type: 'positive',
-          message: 'Editora editada com sucesso!',
-          position: 'top-right'
-        });
+        rows.value[index] = response.data;
       }
+      editDialog.value.visible = false;
+      $q.notify({ type: 'positive', message: 'Editora atualizada com sucesso!', position: 'top-right' });
     })
     .catch(error => {
-      console.error("Erro ao salvar edição:", error.response ? error.response.data : error.message);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao editar a editora: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
+      $q.notify({ type: 'negative', message: 'Erro ao atualizar editora: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
 };
 
 const confirmDelete = () => {
-  const index = rows.value.findIndex(r => r.id === deleteDialog.value.data.id);
-  if (index !== -1) {
-    api.delete(`/publisher/${deleteDialog.value.data.id}`)
-      .then(() => {
-        rows.value.splice(index, 1);
-        deleteDialog.value.visible = false;
-        $q.notify({
-          type: 'positive',
-          message: 'Editora excluída com sucesso!',
-          position: 'top-right'
-        });
-      })
-      .catch(error => {
-        console.error("Erro ao excluir:", error);
-        $q.notify({
-          type: 'negative',
-          message: 'Erro ao excluir a editora: ' + (error.response ? error.response.data.message : error.message),
-          position: 'top-right'
-        });
-      });
-  }
+  api.delete(`/publisher/${deleteDialog.value.data.id}`)
+    .then(() => {
+      rows.value = rows.value.filter(row => row.id !== deleteDialog.value.data.id);
+      deleteDialog.value.visible = false;
+      $q.notify({ type: 'positive', message: 'Editora excluída com sucesso!', position: 'top-right' });
+    })
+    .catch(error => {
+      $q.notify({ type: 'negative', message: 'Erro ao excluir editora: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
+    });
 };
 
 const saveNewPublisher = () => {
@@ -300,19 +226,10 @@ const saveNewPublisher = () => {
     .then(response => {
       rows.value.push(response.data);
       createDialog.value.visible = false;
-      $q.notify({
-        type: 'positive',
-        message: 'Editora criada com sucesso!',
-        position: 'top-right'
-      });
+      $q.notify({ type: 'positive', message: 'Editora criada com sucesso!', position: 'top-right' });
     })
     .catch(error => {
-      console.error("Erro ao criar nova editora:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao criar a editora: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
+      $q.notify({ type: 'negative', message: 'Erro ao criar editora: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
 };
 
@@ -321,8 +238,7 @@ const clearSearch = () => {
   getTable();
 };
 
-const filteredRows = computed(() => {
-  return rows.value.filter(row => row.name.toLowerCase().includes(text.value.toLowerCase()));
+onMounted(() => {
+  getTable();
 });
 </script>
-<!--  -->

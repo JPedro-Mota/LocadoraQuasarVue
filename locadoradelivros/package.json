@@ -35,5 +35,7 @@
     "node": "^20 || ^18 || ^16",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
-  }
+  },
+  "main": "quasar.config.js",
+  "license": "ISC"
 }

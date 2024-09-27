@@ -9,9 +9,9 @@
   </div>
   <q-page padding>
     <div class="tableHeader">
-      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field">
+      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field"  @keyup.enter="getTable(text)">
         <template v-slot:prepend>
-          <q-icon name="search" @click="getTable(text)" />
+          <q-icon name="search"  />
         </template>
         <template v-slot:append>
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
@@ -19,7 +19,7 @@
       </q-input>
       <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
-    <TableComponents :columns="columns" :rows="filteredRows">
+    <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
         <div class="dialogsa">
           <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
@@ -43,9 +43,9 @@
           </q-dialog>
 
           <q-dialog v-model="editDialog.visible" persistent>
-            <q-card style="width: 400px; max-width: 100%;">
+            <q-card style="min-width: 500px; max-width: 100%;">
               <q-card-section>
-                <div class="text-h6">Editar Usuário</div>
+                <div class="text-h6" style="display: flex; justify-content: center;">Editar Usuário</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
                 <q-input v-model="userToEdit.name" label="Nome" />
@@ -63,7 +63,7 @@
           <q-dialog v-model="deleteDialog.visible" persistent>
             <q-card>
               <q-card-section>
-                <div class="text-h6">Confirmar Exclusão</div>
+                <div class="text-h6" >Confirmar Exclusão</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
                 Tem certeza que deseja excluir o usuário "{{ deleteDialog.data.name }}"?
@@ -76,9 +76,9 @@
           </q-dialog>
 
           <q-dialog v-model="createDialog.visible" persistent>
-            <q-card style="min-width: 450px;">
+            <q-card style="min-width: 500px;">
               <q-card-section>
-                <div class="text-h6">Cadastrar Usuário</div>
+                <div class="text-h6" style="display: flex; justify-content: center;">Cadastrar Usuário</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
                 <q-input v-model="userToCreate.name" label="Nome" />
@@ -273,14 +273,4 @@ const clearSearch = () => {
   getTable();
 };
 
-const filteredRows = computed(() => {
-  if (!text.value) {
-    return rows.value;
-  }
-  return rows.value.filter(row =>
-    Object.values(row).some(value =>
-      value.toString().toLowerCase().includes(text.value.toLowerCase())
-    )
-  );
-});
 </script>

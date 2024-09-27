@@ -21,7 +21,7 @@ import { onMounted, ref } from 'vue';
 import TableComponents from '../components/TableComponents.vue';
 import chartBarComponent from '../components/chartBarComponent.vue';
 import chartDoughnutComponent from 'src/components/chartDoughnutComponent.vue';
-import { api, authenticate } from 'src/boot/axios';
+import { api} from 'src/boot/axios';
 
 onMounted(() => {
    getTable();

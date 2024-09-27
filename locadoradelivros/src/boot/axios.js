@@ -14,9 +14,9 @@ if (token) {
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
-const authenticate = (username, password) => {
+const authenticate = (email, password) => {
   return api.post('/auth/login', {
-    name: username,
+    email: email,
     password: password
   })
   .then(response => {

@@ -9,9 +9,9 @@
   </div>
   <q-page padding>
     <div class="tableHeader">
-      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field">
+      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field"  @keyup.enter="getTable(text)">
         <template v-slot:prepend>
-          <q-icon name="search" @click="getTable(text)" />
+          <q-icon name="search"/>
         </template>
         <template v-slot:append>
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
@@ -19,46 +19,44 @@
       </q-input>
       <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
-    <TableComponents :columns="columns" :rows="filteredRows">
-      <template #actions="{ row }">
-        <div class="dialogs">
-          <q-btn flat round dense icon="check" @click="openConfirmDialog(row)" class="actions-bt" />
-          <q-dialog v-model="confirmDialog.visible" persistent>
-            <q-card style="min-width: 100px;">
-              <q-card-section>
-                <div class="text-h6">Confirmar Atualização de Status</div>
-              </q-card-section>
-              <q-card-section>
-                <p>Você tem certeza de que deseja alterar o status para "DELIVERED"?</p>
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Confirmar" color="primary" @click="confirmUpdateStatus" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
 
-          <q-dialog v-model="createDialog.visible" persistent>
-            <q-card style="min-width: 450px;">
-              <q-card-section>
-                <div class="text-h6" style="display:flex; justify-content: center;">Cadastro de aluguel</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                <q-form @submit="onSubmit" class="q-gutter-md q-my-auto">
-                  <q-select v-model="newRent.renterId" :options="renters" label="Locatário" option-label="name" option-value="id" style="width: 95%;" />
-                  <q-select v-model="newRent.bookId" :options="books" label="Livro" option-label="name" option-value="id" style="width: 95%;" />
-                  <q-input v-model="newRent.deadLine" label="Prazo final" type="date" style="width: 95%;" />
-                </q-form>
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Salvar" color="primary" @click="saveNewRent" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-        </div>
+    <TableComponents :columns="columns" :rows="rows">
+      <template #actions="{ row }">
+        <q-btn flat round dense icon="check" @click="openConfirmDialog(row)" class="actions-bt" />
       </template>
     </TableComponents>
+
+    <q-dialog v-model="confirmDialog.visible" persistent>
+      <q-card style="min-width: 300px;">
+        <q-card-section>
+          <div class="text-h6">Confirmar Atualização de Status</div>
+        </q-card-section>
+        <q-card-section>
+          <p>Você tem certeza de que deseja alterar o status para "DELIVERED"?</p>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Confirmar" color="primary" @click="confirmUpdateStatus" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="createDialog.visible" persistent>
+      <q-card style="min-width: 450px;">
+        <q-card-section>
+          <div class="text-h6" style="display:flex; justify-content: center;">Cadastro de aluguel</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-select v-model.number="newRent.renterId" :options="renters.map(p => ({ label: p.name, value: p.id }))" label="Locatário" style="width: 95%;" />
+          <q-select v-model.number="newRent.bookId" :options="books.map(p => ({ label: p.name, value: p.id }))" label="Livro" style="width: 95%;" />
+          <q-input v-model="newRent.deadLine" label="Prazo final" type="date" style="width: 95%;" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Salvar" color="primary" @click="saveNewRent" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -92,15 +90,16 @@ const books = ref([]);
 const getTable = (inputSearch = '') => {
   api.get('/rents', { params: { search: inputSearch } })
     .then(response => {
-      rows.value = Array.isArray(response.data) ? response.data : [];
+      if (Array.isArray(response.data)) {
+        rows.value = response.data;
+        $q.notify({ type: 'positive', message: 'Dados carregados com sucesso!', position: 'top-right' });
+      } else {
+        rows.value = [];
+        $q.notify({ type: 'negative', message: 'Dados retornados não são válidos.', position: 'top-right' });
+      }
     })
     .catch(error => {
-      console.error("Erro ao obter dados:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao obter os aluguéis. Tente novamente mais tarde.',
-        icon: 'warning',
-      });
+      $q.notify({ type: 'negative', message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
 };
 
@@ -139,19 +138,14 @@ const confirmDialog = ref({
   data: {}
 });
 
-const newRent = ref({
-  renterId: 0,
-  bookId: 0,
-  deadLine: ''
-});
+const newRent = ref({ renterId: '', bookId: '', deadLine: '' });
 
 const createDialog = ref({
   visible: false,
-  data: {}
 });
 
 const openConfirmDialog = (row) => {
-  confirmDialog.value.data = { ...row };
+  confirmDialog.value.data = row;
   confirmDialog.value.visible = true;
 };
 
@@ -182,15 +176,26 @@ const confirmUpdateStatus = () => {
 };
 
 const openCreateDialog = () => {
-  newRent.value = { renterId: '', bookId: '', deadLine: '' };
   createDialog.value.visible = true;
 };
 
 const saveNewRent = () => {
-  newRent.value.renterId = parseInt(newRent.value.renterId, 10);
-  newRent.value.bookId = parseInt(newRent.value.bookId, 10);
+  const rentsData = {
+    renterId: newRent.value.renterId.value,
+    bookId: newRent.value.bookId.value,
+    deadLine: newRent.value.deadLine,
+  };
 
-  api.post('/rents', newRent.value)
+  if (!newRent.value.renterId || !newRent.value.bookId) {
+  $q.notify({
+    type: 'warning',
+    message: 'Por favor, selecione um locatário e um livro.',
+    icon: 'warning',
+  });
+  return;
+  }
+
+  api.post('/rents', rentsData)
     .then(response => {
       rows.value.push(response.data);
       createDialog.value.visible = false;
@@ -199,6 +204,9 @@ const saveNewRent = () => {
         message: 'Novo aluguel criado com sucesso!',
         icon: 'check',
       });
+      createDialog.value.visible = false;
+      newRent.value = { renterId: '', bookId: '', deadLine: '' }
+      getTable();
     })
     .catch(error => {
       console.error("Erro ao criar novo aluguel:", error.response ? error.response.data : error.message);
@@ -215,28 +223,12 @@ const clearSearch = () => {
   getTable();
 };
 
-const filteredRows = computed(() => {
-  if (!text.value) {
-    return rows.value;
-  }
-  return rows.value.filter(row =>
-    Object.values(row).some(value =>
-      value.toString().toLowerCase().includes(text.value.toLowerCase())
-    )
-  );
-});
-
-const onSubmit = () => {
-  console.log("Teste");
-};
 </script>
-
 
 <style>
 .title {
   padding-left: 40px;
 }
-
 .actions-bt {
   background: none;
   border: none;
@@ -249,22 +241,12 @@ const onSubmit = () => {
   align-items: center;
   justify-content: space-between;
 }
-
 .input-field {
   flex: 1;
 }
-
 .button-field {
   margin-left: 10px;
   padding: 7px;
   margin-bottom: 2%;
-}
-
-.q-card {
-  min-width: 500px;
-}
-
-.text-h6 {
-  text-align: center;
 }
 </style>

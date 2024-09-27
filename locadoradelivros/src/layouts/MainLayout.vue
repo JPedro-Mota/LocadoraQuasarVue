@@ -64,8 +64,8 @@
           bg-color="grey-5"
           rounded
           standout
-          v-model="name"
-          label="Digite seu nome*"
+          v-model="email"
+          label="Digite seu email*"
           lazy-rules
           :rules="[val => val && val.length > 0 || 'Por favor, digite algo']"
         />
@@ -107,7 +107,7 @@ import { api } from 'src/boot/axios'
 
 const $q = useQuasar()
 
-const name = ref(null)
+const email = ref(null)
 const password = ref(null)
 const drawer = ref(false)
 const miniSidebar = ref(false)
@@ -155,15 +155,15 @@ function toggleSidebar() {
 }
 
 function onSubmit() {
-  if (name.value && password.value) {
+  if (email.value && password.value) {
     api.post("/auth/login", {
-      name: name.value,
+      email: email.value,
       password: password.value
     })
     .then(response => {
       localStorage.setItem('authToken', response.data.token);
       token.value = response.data.token;
-      name.value = null;
+      email.value = null;
       password.value = null;
       window.location.reload();
     })
@@ -176,7 +176,7 @@ function onSubmit() {
 }
 
 function onReset() {
-  name.value = null
+  email.value = null
   password.value = null
 }
 

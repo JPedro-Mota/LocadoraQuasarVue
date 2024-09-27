@@ -9,9 +9,9 @@
   </div>
   <q-page padding>
     <div class="tableHeader">
-      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field">
+      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field" @keyup.enter="getTable(text)">
         <template v-slot:prepend>
-          <q-icon name="search" @click="getTable(text)" />
+          <q-icon name="search"/>
         </template>
         <template v-slot:append>
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
@@ -19,120 +19,92 @@
       </q-input>
       <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
-    <TableComponents :columns="columns" :rows="filteredRows">
+
+    <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
-        <div class="dialogsa">
-          <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
-
-          <!-- View Dialog -->
-          <q-dialog v-model="viewDialog.visible" persistent>
-            <q-card>
-              <q-card-section>
-                <div class="text-h6">Detalhes do Locatário</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                <div><strong>ID:</strong> {{ InfosEdit.id }}</div>
-                <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
-                <div><strong>Email:</strong> {{ InfosEdit.email }}</div>
-                <div><strong>Telefone:</strong> {{ InfosEdit.telephone }}</div>
-                <div><strong>Endereço:</strong> {{ InfosEdit.address }}</div>
-                <div><strong>CPF:</strong> {{ InfosEdit.cpf }}</div>
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Fechar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-
-          <!-- Edit Dialog -->
-          <q-dialog v-model="editDialog.visible" persistent>
-            <q-card style="min-width: 400px;">
-              <q-card-section>
-                <div class="text-h6">Editar Locatário</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                <q-input v-model="renterToEdit.name" label="Nome" />
-                <q-input v-model="renterToEdit.email" label="Email" />
-                <q-input v-model="renterToEdit.telephone" label="Telefone" />
-                <q-input v-model="renterToEdit.address" label="Endereço" />
-                <q-input v-model="renterToEdit.cpf" label="CPF" mask="###.###.###-##" />
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-
-          <!-- Delete Dialog -->
-          <q-dialog v-model="deleteDialog.visible" persistent>
-            <q-card style="min-width: 300px;">
-              <q-card-section>
-                <div class="text-h6">Confirmar Exclusão</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                Tem certeza que deseja excluir o locatário "{{ deleteDialog.data.name }}"?
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Excluir" color="primary" @click="confirmDelete" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-
-          <!-- Create Dialog -->
-          <q-dialog v-model="createDialog.visible" persistent>
-            <q-card style="min-width: 400px;">
-              <q-card-section>
-                <div class="text-h6">Cadastrar Locatário</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                <q-form @submit="onSubmit" class="q-gutter-md q-my-auto">
-                  <q-input v-model="newRenter.name" label="Nome" />
-                  <q-input v-model="newRenter.email" label="Email" />
-                  <q-input v-model="newRenter.telephone" label="Telefone" />
-                  <q-input v-model="newRenter.address" label="Endereço" />
-                  <q-input v-model="newRenter.cpf" label="CPF" mask="###.###.###-##" />
-                </q-form>
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Salvar" color="primary" @click="saveNewRenter" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-        </div>
+        <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" />
+        <q-btn flat round dense icon="edit" @click="openEditDialog(row)" />
+        <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" />
       </template>
     </TableComponents>
+
+    <q-dialog v-model="createDialog.visible" persistent>
+      <q-card style="min-width: 500px;">
+        <q-card-section>
+          <div class="text-h6" style="display: flex; justify-content: center;">Cadastrar Locatário</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-form @submit.prevent="saveNewRenter">
+            <q-input v-model="newRenter.name" label="Nome" />
+            <q-input v-model="newRenter.email" label="Email" />
+            <q-input v-model="newRenter.telephone" label="Telefone" />
+            <q-input v-model="newRenter.address" label="Endereço" />
+            <q-input v-model="newRenter.cpf" label="CPF" mask="###.###.###-##" />
+          </q-form>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Salvar" color="primary" @click="saveNewRenter" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="viewDialog.visible" persistent>
+      <q-card style="min-width: 300px;">
+        <q-card-section>
+          <div class="text-h6">Detalhes do Locatário</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <div><strong>ID:</strong> {{ InfosEdit.id }}</div>
+          <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
+          <div><strong>Email:</strong> {{ InfosEdit.email }}</div>
+          <div><strong>Telefone:</strong> {{ InfosEdit.telephone }}</div>
+          <div><strong>Endereço:</strong> {{ InfosEdit.address }}</div>
+          <div><strong>CPF:</strong> {{ InfosEdit.cpf }}</div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Fechar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="editDialog.visible" persistent>
+      <q-card style="min-width: 500px;">
+        <q-card-section>
+          <div class="text-h6">Editar Locatário</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input v-model="renterToEdit.name" label="Nome" />
+          <q-input v-model="renterToEdit.email" label="Email" />
+          <q-input v-model="renterToEdit.telephone" label="Telefone" />
+          <q-input v-model="renterToEdit.address" label="Endereço" />
+          <q-input v-model="renterToEdit.cpf" label="CPF" mask="###.###.###-##" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="deleteDialog.visible" persistent>
+      <q-card style="min-width: 300px;">
+        <q-card-section>
+          <div class="text-h6">Confirmar Exclusão</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          Tem certeza que deseja excluir o locatário "{{ deleteDialog.data.name }}"?
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Excluir" color="primary" @click="confirmDelete" />
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
-
-<style>
-.title {
-  padding-left: 40px;
-}
-.actions-bt {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-}
-.tableHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.input-field {
-  flex: 1;
-}
-.button-field {
-  margin-left: 10px;
-  padding: 7px;
-  margin-bottom: 2%;
-}
-</style>
 
 <script setup>
 import { onMounted, ref, computed } from 'vue';
@@ -142,10 +114,6 @@ import { useQuasar } from 'quasar';
 
 const $q = useQuasar();
 
-onMounted(() => {
-    getTable();
-});
-
 const columns = [
   { name: 'name', required: true, label: 'Nome', align: 'center', field: row => row.name, sortable: true },
   { name: 'actions', label: 'Ações', align: 'center' }
@@ -153,87 +121,7 @@ const columns = [
 
 const rows = ref([]);
 const text = ref('');
-
-const getTable = (inputSearch = '') => {
-  api.get('/renter', { params: { search: inputSearch } })
-    .then(response => {
-      if (Array.isArray(response.data)) {
-        rows.value = response.data;
-      } else {
-        console.error('A resposta da API não é um array:', response.data);
-        rows.value = [];
-      }
-    })
-    .catch(error => {
-      console.error("Erro ao buscar dados:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao buscar dados: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
-    });
-}
-
-const InfosEdit = ref({});
 const newRenter = ref({ name: '', email: '', telephone: '', address: '', cpf: '' });
-
-const getApi = (id) => {
-  api.get(`/renter/${id}`)
-    .then(response => {
-      InfosEdit.value = response.data;
-      renterToEdit.value = response.data;
-    })
-    .catch(error => {
-      console.error("Erro ao buscar dados do locatário:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao buscar dados do locatário: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
-    });
-}
-
-const viewDialog = ref({
-  visible: false,
-  data: {},
-});
-
-const editDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const deleteDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const createDialog = ref({
-  visible: false,
-  data: {}
-});
-
-const openViewDialog = (row) => {
-  getApi(row.id);
-  viewDialog.value.visible = true;
-};
-
-const openEditDialog = (row) => {
-  getApi(row.id);
-  editDialog.value.data = { ...row };
-  editDialog.value.visible = true;
-};
-
-const openDeleteDialog = (row) => {
-  deleteDialog.value.data = row;
-  deleteDialog.value.visible = true;
-};
-
-const openCreateDialog = () => {
-  newRenter.value = { name: '', email: '', telephone: '', address: '', cpf: '' };
-  createDialog.value.visible = true;
-}
-
 const renterToEdit = ref({
   id: 0,
   name: '',
@@ -242,53 +130,31 @@ const renterToEdit = ref({
   address: '',
   cpf: ''
 });
+const InfosEdit = ref({});
 
-const saveEdit = () => {
-  api.put(`/renter`, { ...renterToEdit.value, telephone: Number(renterToEdit.value.telephone) })
-    .then(() => {
-      const index = rows.value.findIndex(r => r.id === renterToEdit.value.id);
-      if (index !== -1) {
-        rows.value[index] = { ...renterToEdit.value };
+const viewDialog = ref({ visible: false });
+const editDialog = ref({ visible: false });
+const deleteDialog = ref({ visible: false });
+const createDialog = ref({ visible: false });
+
+onMounted(() => {
+  getTable();
+});
+
+const getTable = (inputSearch = '') => {
+  api.get('/renter', { params: { search: inputSearch } })
+    .then(response => {
+      if (Array.isArray(response.data)) {
+        rows.value = response.data;
+        $q.notify({ type: 'positive', message: 'Dados carregados com sucesso!', position: 'top-right' });
+      } else {
+        rows.value = [];
+        $q.notify({ type: 'negative', message: 'Dados retornados não são válidos.', position: 'top-right' });
       }
-      editDialog.value.visible = false;
-      $q.notify({
-        type: 'positive',
-        message: 'Locatário editado com sucesso!',
-        position: 'top-right'
-      });
     })
     .catch(error => {
-      console.error("Erro ao salvar edição:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao salvar edição: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
+      $q.notify({ type: 'negative', message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
-};
-
-const confirmDelete = () => {
-  const index = rows.value.findIndex(r => r.id === deleteDialog.value.data.id);
-  if (index !== -1) {
-    api.delete(`/renter/${deleteDialog.value.data.id}`)
-      .then(() => {
-        rows.value.splice(index, 1);
-        deleteDialog.value.visible = false;
-        $q.notify({
-          type: 'positive',
-          message: 'Locatário excluído com sucesso!',
-          position: 'top-right'
-        });
-      })
-      .catch(error => {
-        console.error("Erro ao excluir:", error);
-        $q.notify({
-          type: 'negative',
-          message: 'Erro ao excluir locatário: ' + (error.response ? error.response.data.message : error.message),
-          position: 'top-right'
-        });
-      });
-  }
 };
 
 const saveNewRenter = () => {
@@ -303,10 +169,87 @@ const saveNewRenter = () => {
       });
     })
     .catch(error => {
-      console.error("Erro ao criar novo locatário:", error);
+      console.error("Erro ao criar locatário:", error);
       $q.notify({
         type: 'negative',
         message: 'Erro ao criar locatário: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
+    });
+};
+
+const openCreateDialog = () => {
+  createDialog.value.visible = true;
+};
+
+const openViewDialog = (row) => {
+  getApi(row.id);
+  viewDialog.value.visible = true;
+};
+
+const openEditDialog = (row) => {
+  renterToEdit.value = { ...row };
+  editDialog.value.visible = true;
+};
+
+const openDeleteDialog = (row) => {
+  deleteDialog.value.data = row;
+  deleteDialog.value.visible = true;
+};
+
+const getApi = (id) => {
+  api.get(`/renter/${id}`)
+    .then(response => {
+      InfosEdit.value = response.data;
+    })
+    .catch(error => {
+      console.error("Erro ao buscar dados do locatário:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao buscar dados do locatário: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
+    });
+};
+
+const saveEdit = () => {
+  api.put(`/renter/${renterToEdit.value.id}`, renterToEdit.value)
+    .then(response => {
+      const index = rows.value.findIndex(r => r.id === renterToEdit.value.id);
+      rows.value[index] = response.data;
+      editDialog.value.visible = false;
+      $q.notify({
+        type: 'positive',
+        message: 'Locatário atualizado com sucesso!',
+        position: 'top-right'
+      });
+    })
+    .catch(error => {
+      console.error("Erro ao atualizar locatário:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao atualizar locatário: ' + (error.response ? error.response.data.message : error.message),
+        position: 'top-right'
+      });
+    });
+};
+
+const confirmDelete = () => {
+  api.delete(`/renter/${deleteDialog.value.data.id}`)
+    .then(() => {
+      rows.value = rows.value.filter(r => r.id !== deleteDialog.value.data.id);
+      deleteDialog.value.visible = false;
+      $q.notify({
+        type: 'positive',
+        message: 'Locatário excluído com sucesso!',
+        position: 'top-right'
+      });
+    })
+    .catch(error => {
+      console.error("Erro ao excluir locatário:", error);
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao excluir locatário: ' + (error.response ? error.response.data.message : error.message),
         position: 'top-right'
       });
     });
@@ -317,18 +260,33 @@ const clearSearch = () => {
   getTable();
 };
 
-const filteredRows = computed(() => {
-  if (!text.value) {
-    return rows.value;
-  }
-  return rows.value.filter(row =>
-    Object.values(row).some(value =>
-      value.toString().toLowerCase().includes(text.value.toLowerCase())
-    )
-  );
-});
 
-const onSubmit = () => {
-  console.log("Teste");
-};
 </script>
+
+<style>
+.title {
+  padding-left: 40px;
+}
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.input-field {
+  flex: 1;
+}
+
+.button-field {
+  margin-left: 10px;
+  padding: 7px;
+}
+
+.actions-bt {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+</style>

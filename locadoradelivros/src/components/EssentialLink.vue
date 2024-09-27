@@ -31,8 +31,8 @@ const props = defineProps({
   },
 
   route: {
-    type: String,
-    default: ''
+  type: [String, Object], // Aceita tanto String quanto Object
+  default: ''
   },
 
   icon: {

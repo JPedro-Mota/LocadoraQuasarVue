@@ -10,7 +10,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import Chart from 'chart.js/auto';
-import { api, authenticate } from 'src/boot/axios';
+import { api, } from 'src/boot/axios';
 
 const mostRented1 = ref('');
 const mostRented2 = ref('');

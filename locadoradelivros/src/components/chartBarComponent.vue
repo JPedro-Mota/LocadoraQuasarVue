@@ -8,7 +8,7 @@
 <script setup>
 import { ref, onMounted, defineProps } from 'vue';
 import { Chart, registerables } from 'chart.js';
-import { api, authenticate } from 'src/boot/axios';
+import { api } from 'src/boot/axios';
 
 Chart.register(...registerables);
 

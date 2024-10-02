@@ -103,6 +103,10 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <div class="row justify-center q-my-md">
+    <q-btn icon="chevron_left" @click="pageDown" :disable="page.value <= 0" />
+    <q-btn icon="chevron_right" @click="pageUp" :disable="page.value" />
+  </div>
   </q-page>
 </template>
 
@@ -121,6 +125,8 @@ const columns = [
 
 const rows = ref([]);
 const text = ref('');
+const page = ref(0);
+const totalPages = ref(1);
 const newRenter = ref({ name: '', email: '', telephone: '', address: '', cpf: '' });
 const renterToEdit = ref({
   id: 0,
@@ -142,19 +148,27 @@ onMounted(() => {
 });
 
 const getTable = (inputSearch = '') => {
-  api.get('/renter', { params: { search: inputSearch } })
-    .then(response => {
-      if (Array.isArray(response.data)) {
-        rows.value = response.data;
-        $q.notify({ type: 'positive', message: 'Dados carregados com sucesso!', position: 'top-right' });
-      } else {
-        rows.value = [];
-        $q.notify({ type: 'negative', message: 'Dados retornados não são válidos.', position: 'top-right' });
-      }
+  api.get('/renter', { params: { search: inputSearch, page: page.value } })
+  .then(response => {
+        rows.value = response.data.content;
+        totalPages.value = response.headers['x-total-pages']; 
+        console.log("Dados obtidos com sucesso", response.data);
     })
     .catch(error => {
       $q.notify({ type: 'negative', message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
+};
+
+const pageUp = () => {
+    page.value++;
+    getTable(text.value);
+};
+
+const pageDown = () => {
+  if (page.value > 0) {
+    page.value--;
+    getTable(text.value);
+  }
 };
 
 const saveNewRenter = () => {

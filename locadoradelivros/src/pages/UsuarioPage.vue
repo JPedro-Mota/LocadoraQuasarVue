@@ -9,9 +9,9 @@
   </div>
   <q-page padding>
     <div class="tableHeader">
-      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field"  @keyup.enter="getTable(text)">
+      <q-input bg-color="grey-4" rounded standout dense bottom-slots v-model="text" label="Pesquisar" class="input-field" @keyup.enter="getTable(text)">
         <template v-slot:prepend>
-          <q-icon name="search"  />
+          <q-icon name="search" />
         </template>
         <template v-slot:append>
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
@@ -63,7 +63,7 @@
           <q-dialog v-model="deleteDialog.visible" persistent>
             <q-card>
               <q-card-section>
-                <div class="text-h6" >Confirmar Exclusão</div>
+                <div class="text-h6">Confirmar Exclusão</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
                 Tem certeza que deseja excluir o usuário "{{ deleteDialog.data.name }}"?
@@ -84,7 +84,7 @@
                 <q-input v-model="userToCreate.name" label="Nome" />
                 <q-input v-model="userToCreate.email" label="Email" />
                 <q-input v-model="userToCreate.password" label="Senha" type="password" />
-                <q-select filled v-model="userToCreate.role" :options="options" label="Nível de acesso"  emit-value map-options/>
+                <q-select filled v-model="userToCreate.role" :options="options" label="Nível de acesso" emit-value map-options />
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveNewUser" />
@@ -95,6 +95,10 @@
         </div>
       </template>
     </TableComponents>
+    <div class="row justify-center q-my-md">
+    <q-btn icon="chevron_left" @click="pageDown" :disable="page.value <= 0" />
+    <q-btn icon="chevron_right" @click="pageUp" :disable="page.value" />
+  </div>
   </q-page>
 </template>
 
@@ -121,150 +125,56 @@
   padding: 7px;
   margin-bottom: 2%;
 }
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0;
+}
 </style>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref} from 'vue';
 import { useQuasar } from 'quasar';
 import TableComponents from '../components/TableComponents.vue';
 import { api } from 'src/boot/axios';
 
 const $q = useQuasar();
 
-onMounted(() => {
-  getTable();
-});
+const rows = ref([]);
+const text = ref('');
+const page = ref(0);
+const totalPages = ref(1);
+const InfosUser = ref({});
+const userToEdit = ref({ name: '', email: '', password: '', role: '' });
+const userToCreate = ref({ name: '', email: '', password: '', role: '' });
+const viewDialog = ref({ visible: false });
+const editDialog = ref({ visible: false });
+const deleteDialog = ref({ visible: false, data: {} });
+const createDialog = ref({ visible: false });
+const options = ref([
+  { label: 'ADMIN', value: 'ADMIN' },
+  { label: 'USER', value: 'USER' }
+]);
 
 const columns = [
   { name: 'name', required: true, label: 'Nome', align: 'center', field: row => row.name, sortable: true },
   { name: 'actions', label: 'Ações', align: 'center' }
 ];
 
-const rows = ref([]);
-const text = ref('');
+onMounted(() => {
+  getTable();
+});
 
 const getTable = (inputSearch = '') => {
-  api.get('/user', { params: { search: inputSearch } })
+  api.get('/user', { params: { search: inputSearch, page: page.value } })
     .then(response => {
-      if (Array.isArray(response.data)) {
-        rows.value = response.data;
-        console.log("Dados obtidos com sucesso");
-      } else {
-        console.error('A resposta da API não é um array:', response.data);
-        rows.value = [];
-      }
+        rows.value = response.data.content;
+        totalPages.value = response.headers['x-total-pages']; // Ajuste aqui se necessário
+        console.log("Dados obtidos com sucesso", response.data);
     })
     .catch(error => {
-      console.error("Erro ao obter dados:", error);
-    });
-}
-
-const InfosUser = ref({});
-const userToEdit = ref({ name: '', email: '', password: '', role: '' });
-const userToCreate = ref({ name: '', email: '', password: '', role: '' });
-
-const getApi = (id) => {
-  api.get(`/user/${id}`)
-    .then(response => {
-      InfosUser.value = response.data;
-      userToEdit.value = response.data;
-    })
-    .catch(error => {
-      console.error("Erro", error);
-    });
-}
-
-const viewDialog = ref({ visible: false });
-const editDialog = ref({ visible: false });
-const deleteDialog = ref({ visible: false, data: {} });
-const createDialog = ref({ visible: false });
-
-const openViewDialog = (row) => {
-  getApi(row.id);
-  viewDialog.value.visible = true;
-};
-
-const openEditDialog = (row) => {
-  getApi(row.id);
-  editDialog.value.visible = true;
-};
-
-const openDeleteDialog = (row) => {
-  deleteDialog.value.data = row;
-  deleteDialog.value.visible = true;
-};
-
-const openCreateDialog = () => {
-  userToCreate.value = { name: '', email: '', password: '', role: '' };
-  createDialog.value.visible = true;
-}
-
-const options = ref([
-  { label: 'ADMIN', value: 'ADMIN' },
-  { label: 'USER', value: 'USER' }
-]);
-
-const saveEdit = () => {
-  api.put(`/user/${userToEdit.value.id}`, { ...userToEdit.value })
-    .then(response => {
-      const index = rows.value.findIndex(r => r.id === userToEdit.value.id);
-      if (index !== -1) {
-        rows.value[index] = { ...response.data };
-        $q.notify({
-          type: 'positive',
-          message: 'Usuário atualizado com sucesso!'
-        });
-      }
-      editDialog.value.visible = false;
-    })
-    .catch(error => {
-      console.error("Erro ao salvar edição:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao atualizar o usuário.'
-      });
-    });
-};
-
-const confirmDelete = () => {
-  const index = rows.value.findIndex(r => r.id === deleteDialog.value.data.id);
-  if (index !== -1) {
-    api.delete(`/user/${deleteDialog.value.data.id}`)
-      .then(() => {
-        rows.value.splice(index, 1);
-        $q.notify({
-          type: 'positive',
-          message: 'Usuário excluído com sucesso!'
-        });
-        deleteDialog.value.visible = false;
-      })
-      .catch(error => {
-        console.error("Erro ao excluir:", error);
-        $q.notify({
-          type: 'negative',
-          message: 'Erro ao excluir o usuário.'
-        });
-      });
-  }
-};
-
-const saveNewUser = () => {
-  const { role, ...rest } = userToCreate.value;
-  api.post('/user', { ...rest, role: role })
-    .then(response => {
-      rows.value.push(response.data);
-      $q.notify({
-        type: 'positive',
-        message: 'Usuário criado com sucesso!'
-      });
-      createDialog.value.visible = false;
-    })
-    .catch(error => {
-      console.error("Erro ao criar novo usuário:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao criar novo usuário.'
-      });
+      console.error('Erro ao obter dados da API:', error);
     });
 };
 
@@ -273,4 +183,71 @@ const clearSearch = () => {
   getTable();
 };
 
+const openCreateDialog = () => {
+  userToCreate.value = { name: '', email: '', password: '', role: '' };
+  createDialog.value.visible = true;
+};
+
+const saveNewUser = () => {
+  api.post('/user', userToCreate.value)
+    .then(() => {
+      $q.notify({ type: 'positive', message: 'Usuário criado com sucesso!' });
+      createDialog.value.visible = false;
+      getTable();
+    })
+    .catch(error => {
+      console.error('Erro ao criar usuário:', error);
+    });
+};
+
+const openViewDialog = (row) => {
+  InfosUser.value = row;
+  viewDialog.value.visible = true;
+};
+
+const openEditDialog = (row) => {
+  userToEdit.value = { ...row };
+  editDialog.value.visible = true;
+};
+
+const saveEdit = () => {
+  api.put(`/user/${userToEdit.value.id}`, userToEdit.value)
+    .then(() => {
+      $q.notify({ type: 'positive', message: 'Usuário editado com sucesso!' });
+      editDialog.value.visible = false;
+      getTable();
+    })
+    .catch(error => {
+      console.error('Erro ao editar usuário:', error);
+    });
+};
+
+const openDeleteDialog = (row) => {
+  deleteDialog.value.visible = true;
+  deleteDialog.value.data = row;
+};
+
+const confirmDelete = () => {
+  api.delete(`/user/${deleteDialog.value.data.id}`)
+    .then(() => {
+      $q.notify({ type: 'negative', message: 'Usuário excluído com sucesso!' });
+      deleteDialog.value.visible = false;
+      getTable();
+    })
+    .catch(error => {
+      console.error('Erro ao excluir usuário:', error);
+    });
+};
+
+const pageUp = () => {
+    page.value++;
+    getTable(text.value);
+};
+
+const pageDown = () => {
+  if (page.value > 0) {
+    page.value--;
+    getTable(text.value);
+  }
+};
 </script>

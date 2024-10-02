@@ -96,6 +96,10 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <div class="row justify-center q-my-md">
+    <q-btn icon="chevron_left" @click="pageDown" :disable="page.value <= 0" />
+    <q-btn icon="chevron_right" @click="pageUp" :disable="page.value" />
+  </div>
   </q-page>
 </template>
 
@@ -134,6 +138,8 @@ const $q = useQuasar();
 
 const rows = ref([]);
 const text = ref('');
+const page = ref(0);
+const totalPages = ref(1);
 const newPublisher = ref({ name: '', email: '', telephone: '', site: '' });
 const InfosEdit = ref({});
 const publisherToEdit = ref({ id: '', name: '', email: '', telephone: 0, site: '' });
@@ -149,19 +155,27 @@ const columns = [
 ];
 
 const getTable = (inputSearch = '') => {
-  api.get('/publisher', { params: { search: inputSearch } })
+  api.get('/publisher', { params: { search: inputSearch, page: page.value } })
     .then(response => {
-      if (Array.isArray(response.data)) {
-        rows.value = response.data;
-        $q.notify({ type: 'positive', message: 'Dados carregados com sucesso!', position: 'top-right' });
-      } else {
-        rows.value = [];
-        $q.notify({ type: 'negative', message: 'Dados retornados não são válidos.', position: 'top-right' });
-      }
+      rows.value = response.data.content;
+        totalPages.value = response.headers['x-total-pages'];
+        console.log("Dados obtidos com sucesso", response.data);
     })
     .catch(error => {
       $q.notify({ type: 'negative', message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
+};
+
+const pageUp = () => {
+    page.value++;
+    getTable(text.value);
+};
+
+const pageDown = () => {
+  if (page.value > 0) {
+    page.value--;
+    getTable(text.value);
+  }
 };
 
 const getApi = (id) => {

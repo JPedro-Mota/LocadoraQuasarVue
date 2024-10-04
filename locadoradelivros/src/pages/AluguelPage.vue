@@ -46,9 +46,36 @@
         <q-card-section>
           <div class="text-h6" style="display:flex; justify-content: center;">Cadastro de aluguel</div>
         </q-card-section>
-        <q-card-section class="q-pt-none">
-          <q-select v-model.number="newRent.renterId" :options="renters.map(p => ({ label: p.name, value: p.id }))" label="Locatário" style="width: 95%;" />
-          <q-select v-model.number="newRent.bookId" :options="books.map(p => ({ label: p.name, value: p.id }))" label="Livro" style="width: 95%;" />
+        <q-card-section class="q-pt-none q-gutter-sm">
+          <q-select
+              filled
+              v-model="selectedRenter"
+              use-input
+              hide-selected
+              fill-input
+              input-debounce="0"
+              :options="renters"
+              option-label="name"
+              label="Locatários"
+              @filter="renterFilter"
+              @update:model-value="onItemClickRegister(selectedRenter, newRent)"
+            />
+
+
+            <q-select
+              filled
+              v-model="selectedBook"
+              use-input
+              hide-selected
+              fill-input
+              input-debounce="0"
+              :options="books"
+              option-label="name"
+              label="Livros"
+              @filter="bookFilter"
+              @update:model-value="onItemClickRegister(selectedBook, newRent)"
+            />
+
           <q-input v-model="newRent.deadLine" label="Prazo final" type="date" style="width: 95%;" />
         </q-card-section>
         <q-card-actions align="right">
@@ -65,7 +92,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref} from 'vue';
 import TableComponents from '../components/TableComponents.vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
@@ -92,12 +119,14 @@ const page = ref(0);
 const totalPages = ref(1);
 const renters = ref([]);
 const books = ref([]);
+const selectedBook = ref([]);
+const selectedRenter = ref([]);
 
 const getTable = (inputSearch = '') => {
   api.get('/rents', { params: { search: inputSearch, page: page.value } })
   .then(response => {
       rows.value = response.data.content;
-        totalPages.value = response.headers['x-total-pages']; // Ajuste aqui se necessário
+        totalPages.value = response.headers['x-total-pages'];
         console.log("Dados obtidos com sucesso", response.data);
     })
     .catch(error => {
@@ -117,10 +146,10 @@ const pageDown = () => {
   }
 };
 
-const fetchRenters = () => {
-  api.get('/renter')
+const fetchRenters = (inputSearch = '') => {
+  api.get('/renter', {params: {search: inputSearch}})
     .then(response => {
-      renters.value = response.data;
+      renters.value = response.data.content;
     })
     .catch(error => {
       console.error("Erro ao obter locatários:", error);
@@ -132,10 +161,10 @@ const fetchRenters = () => {
     });
 };
 
-const fetchBooks = () => {
-  api.get('/book')
+const fetchBooks = (inputSearch = '') => {
+  api.get('/book', {params: {search: inputSearch}})
     .then(response => {
-      books.value = response.data;
+      books.value = response.data.content;
     })
     .catch(error => {
       console.error("Erro ao obter livros:", error);
@@ -146,6 +175,37 @@ const fetchBooks = () => {
       });
     });
 };
+
+
+function bookFilter(val, update){
+  if (val === '') {
+    update(() => {
+      fetchBooks();
+    });
+  } else {
+    update (() => {
+      const needle = val.toLowerCase();
+      books.value = books.value.filter(books =>
+        books.name.toLowerCase().includes(needle)
+      );
+    });
+  }
+}
+
+function renterFilter(val, update){
+  if (val === '') {
+    update(() => {
+      fetchRenters();
+    });
+  } else {
+    update (() => {
+      const needle = val.toLowerCase();
+      renters.value = renters.value.filter(renters =>
+        renters.name.toLowerCase().includes(needle)
+      );
+    });
+  }
+}
 
 const confirmDialog = ref({
   visible: false,

@@ -17,14 +17,16 @@
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
         </template>
       </q-input>
-      <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
+
+      <q-btn v-if="loggedInUserRole === 'ADMIN'" rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
     <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
         <div class="dialogsa">
           <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
+
+          <q-btn v-if="row.role === 'ADMIN'" flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
+          <q-btn  v-if="row.role === 'ADMIN'" flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
 
           <q-dialog v-model="viewDialog.visible" persistent>
             <q-card style="min-width: 300px;">
@@ -96,11 +98,12 @@
       </template>
     </TableComponents>
     <div class="row justify-center q-my-md">
-    <q-btn icon="chevron_left" @click="pageDown" :disable="page.value <= 0" />
-    <q-btn icon="chevron_right" @click="pageUp" :disable="page.value" />
-  </div>
+      <q-btn icon="chevron_left" @click="pageDown" :disable="page.value <= 0" />
+      <q-btn icon="chevron_right" @click="pageUp" :disable="page.value" />
+    </div>
   </q-page>
 </template>
+
 
 <style>
 .title {
@@ -162,6 +165,7 @@ const columns = [
   { name: 'actions', label: 'Ações', align: 'center' }
 ];
 
+
 onMounted(() => {
   getTable();
 });
@@ -170,7 +174,7 @@ const getTable = (inputSearch = '') => {
   api.get('/user', { params: { search: inputSearch, page: page.value } })
     .then(response => {
         rows.value = response.data.content;
-        totalPages.value = response.headers['x-total-pages']; // Ajuste aqui se necessário
+        totalPages.value = response.headers['x-total-pages'];
         console.log("Dados obtidos com sucesso", response.data);
     })
     .catch(error => {
@@ -250,4 +254,6 @@ const pageDown = () => {
     getTable(text.value);
   }
 };
+
+
 </script>

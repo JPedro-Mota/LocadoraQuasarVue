@@ -36,12 +36,19 @@
           <div class="text-h6">Detalhes do Livro</div>
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <div><strong>ID:</strong> {{ InfosEdit.id }}</div>
-          <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
-          <div><strong>Autor:</strong> {{ InfosEdit.author }}</div>
-          <div><strong>Quantidade Total:</strong> {{ InfosEdit.totalQuantity }}</div>
-          <div><strong>Data de Lançamento:</strong> {{ InfosEdit.launchDate }}</div>
-          <div><strong>Editora:</strong> {{ InfosEdit.publisherName }}</div>
+          <div class="row q-gutter-md q-justify-center">
+            <div class="column q-gutter-sm">
+              <q-input v-model="InfosEdit.id" label="Id do Livro" rounded outlined readonly> <template v-slot:prepend>  <q-icon name="key"/></template></q-input>
+              <q-input v-model="InfosEdit.name" label="Nome" rounded outlined readonly><template v-slot:prepend>  <q-icon name="book"/></template></q-input>
+              <q-input v-model="InfosEdit.author" label="Autor" rounded outlined readonly><template v-slot:prepend>  <q-icon name="boy"/></template></q-input>
+            </div>
+
+            <div class="column q-gutter-sm">
+              <q-input v-model="InfosEdit.totalQuantity" label="Quantidade total" rounded outlined readonly><template v-slot:prepend>  <q-icon name="library_books"/></template></q-input>
+              <q-input v-model="InfosEdit.launchDate" label="Data de lançamento" rounded outlined readonly><template v-slot:prepend> <q-icon name="calendar_month"/></template></q-input>
+              <q-input v-model="InfosEdit.publisherName" label="Nome da Editora" rounded outlined readonly><template v-slot:prepend> <q-icon name="edit"/></template></q-input>
+            </div>
+          </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Fechar" color="primary" v-close-popup />
@@ -59,7 +66,7 @@
           <q-input v-model="bookToEdit.author" label="Autor" />
           <q-input v-model="bookToEdit.totalQuantity" label="Quantidade Total" />
           <q-input v-model="bookToEdit.launchDate" label="Data de Lançamento" type="date" />
-          <q-select v-model.number="bookToEdit.publisherId" :options="publishers.map(p => ({ label: p.name, value: p.id }))" label="Editora"/>
+          <q-select v-model="bookToEdit.publisherName" :options="publishers.map(p => ({ label: p.name, value: p.id }))" label="" />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
@@ -91,10 +98,24 @@
         <q-card-section class="q-pt-none">
           <q-form @submit.prevent="saveNewBook" class="q-gutter-md q-my-auto">
             <q-input v-model="newBook.name" label="Nome" />
-            <q-input v-model="newBook.author" label="Autor" />
-            <q-input v-model="newBook.totalQuantity" label="Quantidade Total" />
-            <q-input v-model="newBook.launchDate" label="Data de Lançamento" type="date" />
-            <q-select v-model.number="newBook.publisherId" :options="publishers.map(p => ({ label: p.name, value: p.id }))" label="Editora"/>
+            <q-input v-model="newBook.author" label="Autor" :rules="[val => val && val.length > 3 || 'É necessário ter mais de três caracteres']" />
+            <q-input v-model="newBook.totalQuantity" label="Quantidade Total" :rules="[val => val > 0 || 'É necessário que a quantidade seja maior que 0']" />
+            <q-input v-model="newBook.launchDate" label="Data de Lançamento" type="date" :rules="[val => val && val.length >= 6 || 'Adicione uma data válida' ]" :max="today" />
+
+            <q-select
+              filled
+              v-model="selectedPublisher"
+              use-input
+              hide-selected
+              fill-input
+              input-debounce="0"
+              :options="publishers"
+              option-label="name"
+              label="Editora"
+              @filter="publisherFilter"
+              @update:model-value="onItemClickRegister(selectedPublisher, newBook)"
+            />
+
           </q-form>
         </q-card-section>
         <q-card-actions align="right">
@@ -104,9 +125,9 @@
       </q-card>
     </q-dialog>
     <div class="row justify-center q-my-md">
-    <q-btn icon="chevron_left" @click="pageDown" :disable="page.value <= 0" />
-    <q-btn icon="chevron_right" @click="pageUp" :disable="page.value" />
-  </div>
+      <q-btn icon="chevron_left" @click="pageDown" :disable="page.value <= 0" />
+      <q-btn icon="chevron_right" @click="pageUp" :disable="page.value" />
+    </div>
   </q-page>
 </template>
 
@@ -120,7 +141,6 @@
   cursor: pointer;
   padding: 5px;
 }
-
 .tableHeader {
   display: flex;
   align-items: center;
@@ -137,7 +157,7 @@
 </style>
 
 <script setup>
-import { onMounted, ref} from 'vue';
+import { onMounted, ref } from 'vue';
 import TableComponents from '../components/TableComponents.vue';
 import { api } from 'src/boot/axios';
 import { useQuasar } from 'quasar';
@@ -154,22 +174,19 @@ const page = ref(0);
 const totalPages = ref(1);
 const publishers = ref([]);
 const text = ref('');
-
 const InfosEdit = ref({});
 const newBook = ref({ name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' });
 const bookToEdit = ref({ id: '', name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' });
-
 const viewDialog = ref({ visible: false });
 const editDialog = ref({ visible: false });
 const deleteDialog = ref({ visible: false, data: {} });
 const createDialog = ref({ visible: false });
 
 const getTable = (inputSearch = '') => {
-  api.get('/book', { params: { search: inputSearch, page: page.value} })
-  .then(response => {
-        rows.value = response.data.content;
-        totalPages.value = response.headers['x-total-pages'];
-        console.log("Dados obtidos com sucesso", response.data);
+  api.get('/book', { params: { search: inputSearch, page: page.value } })
+    .then(response => {
+      rows.value = response.data.content;
+      totalPages.value = response.headers['x-total-pages'];
     })
     .catch(error => {
       $q.notify({ type: 'negative', message: 'Erro ao carregar dados: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
@@ -177,8 +194,8 @@ const getTable = (inputSearch = '') => {
 };
 
 const pageUp = () => {
-    page.value++;
-    getTable(text.value);
+  page.value++;
+  getTable(text.value);
 };
 
 const pageDown = () => {
@@ -188,99 +205,40 @@ const pageDown = () => {
   }
 };
 
-const getPublishers = () => {
-  api.get('/publisher')
+const getPublishers = (inputSearch = '') => {
+  api.get('/publisher', {params: {search: inputSearch}})
     .then(response => {
-      publishers.value = Array.isArray(response.data) ? response.data : [];
+      publishers.value = response.data.content;
     })
     .catch(error => {
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao obter editoras. Tente novamente.',
-        icon: 'warning',
-      });
+      $q.notify({ type: 'negative', message: 'Erro ao carregar editoras: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
     });
 };
 
-onMounted(() => {
-  getTable();
-  getPublishers();
-});
-
-const getDataById = (id) => {
-  api.get(`/book/${id}`)
-    .then(response => {
-      InfosEdit.value = response.data;
-    })
-    .catch(error => {
-      console.error("Erro ao obter dados:", error);
+function publisherFilter(val, update) {
+  if (val === '') {
+    update(() => {
+      getPublishers();
     });
+  } else {
+    update(() => {
+      const needle = val.toLowerCase();
+      publishers.value = publishers.value.filter(publisher =>
+        publisher.name.toLowerCase().includes(needle)
+      );
+    });
+  }
 }
 
-const saveNewBook = () => {
-  if (!newBook.value.name || !newBook.value.author || !newBook.value.totalQuantity || !newBook.value.launchDate || !newBook.value.publisherId) {
-    $q.notify({
-      type: 'negative',
-      message: 'Preencha todos os campos.',
-      icon: 'warning',
-    });
-    return;
+
+function onItemClickRegister(seleceted, book){
+  if (seleceted) {
+    book.publisherId = seleceted.id;
   }
-  const bookData = {
-    name: newBook.value.name,
-    author: newBook.value.author,
-    totalQuantity: Number(newBook.value.totalQuantity),
-    launchDate: newBook.value.launchDate,
-    publisherId: newBook.value.publisherId.value || newBook.value.publisherId,
-  };
-  api.post('/book', bookData)
-    .then(() => {
-      $q.notify({
-        type: 'positive',
-        message: 'Livro cadastrado com sucesso.',
-        icon: 'check',
-      });
-      createDialog.value.visible = false;
-      newBook.value = { name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' };
-      getTable();
-    })
-    .catch(error => {
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao cadastrar livro. Tente novamente.',
-        icon: 'warning',
-      });
-    });
-};
-
-const saveEdit = () => {
-  const bookData = {
-    ...bookToEdit.value,
-    totalQuantity: Number(bookToEdit.value.totalQuantity),
-    publisherId: bookToEdit.value.publisherId
-  };
-
-  api.put(`/book/${bookToEdit.value.id}`, bookData)
-    .then(() => {
-      $q.notify({
-        type: 'positive',
-        message: 'Livro atualizado com sucesso.',
-        icon: 'check',
-      });
-      editDialog.value.visible = false;
-      getTable();
-    })
-    .catch(error => {
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao atualizar livro. Tente novamente.',
-        icon: 'warning',
-      });
-    });
-};
+}
 
 const openViewDialog = (row) => {
-  getDataById(row.id);
+  InfosEdit.value = row;
   viewDialog.value.visible = true;
 };
 
@@ -289,33 +247,43 @@ const openEditDialog = (row) => {
   editDialog.value.visible = true;
 };
 
+const saveEdit = () => {
+  api.put(`/book/${bookToEdit.value.id}`, bookToEdit.value)
+    .then(() => {
+      $q.notify({ type: 'positive', message: 'Livro atualizado com sucesso.' });
+      editDialog.value.visible = false;
+      getTable(text.value);
+    })
+    .catch(error => {
+      if(errors.response.status == 403){
+        showNotification('negative', 'Você não tem permissão usar essa função');
+      }
+      else{
+        showNotification('negative', errors.response.data.errors);
+      }
+
+      console.log("Erro ao criar livro", errors.response.data.errors);
+    });
+};
+
 const openDeleteDialog = (row) => {
-  deleteDialog.value.data = row;
   deleteDialog.value.visible = true;
+  deleteDialog.value.data = row;
 };
 
 const confirmDelete = () => {
   api.delete(`/book/${deleteDialog.value.data.id}`)
     .then(() => {
-      $q.notify({
-        type: 'positive',
-        message: 'Livro excluído com sucesso.',
-        icon: 'check',
-      });
+      $q.notify({ type: 'positive', message: 'Livro excluído com sucesso.' });
       deleteDialog.value.visible = false;
-      getTable();
+      getTable(text.value);
     })
     .catch(error => {
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao excluir livro. Tente novamente.',
-        icon: 'warning',
-      });
+      const errorMessage = error.response && error.response.data && error.response.data.message
+        ? error.response.data.message
+        : 'Erro ao excluir livro.';
+      $q.notify({ type: 'negative', message: errorMessage, position: 'top-right' });
     });
-};
-
-const openCreateDialog = () => {
-  createDialog.value.visible = true;
 };
 
 const clearSearch = () => {
@@ -323,5 +291,27 @@ const clearSearch = () => {
   getTable();
 };
 
+const openCreateDialog = () => {
+  createDialog.value.visible = true;
+};
 
+const saveNewBook = () => {
+  api.post('/book', { ...newBook.value, publisherId: newBook.value.publisherId })
+    .then(() => {
+      $q.notify({ type: 'positive', message: 'Livro criado com sucesso.' });
+      createDialog.value.visible = false;
+      getTable(text.value);
+    })
+    .catch(error => {
+      const errorMessage = error.response && error.response.data && error.response.data.message
+        ? error.response.data.message
+        : 'Erro ao criar livro.';
+      $q.notify({ type: 'negative', message: errorMessage, position: 'top-right' });
+    });
+};
+
+onMounted(() => {
+  getTable();
+  getPublishers();
+});
 </script>

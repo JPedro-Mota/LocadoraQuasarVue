@@ -27,13 +27,16 @@
             aria-label="Menu"
             @click="toggleSidebar"
           />
+
         </q-item>
-        <div class="space"></div>
+        <div class="space"><p style="color: yellow;">{{ user.role }}</p></div>
         <EssentialLink
           v-for="link in linksList"
           :key="link.title"
           v-bind="link"
         />
+
+
       </q-list>
 
 
@@ -104,6 +107,7 @@ import { ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
 import { useQuasar } from 'quasar'
 import { api } from 'src/boot/axios'
+import { onMounted } from 'vue';
 
 const $q = useQuasar()
 
@@ -112,6 +116,32 @@ const password = ref(null)
 const drawer = ref(false)
 const miniSidebar = ref(false)
 const token = ref(localStorage.getItem('authToken'))
+
+onMounted(() => {
+  const token = localStorage.getItem('authToken');
+  const name = localStorage.getItem('name');
+  const role = localStorage.getItem('role');
+
+  if (token) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  }
+
+  console.log('Role recuperado do localStorage:', role);
+  console.log('Nome recuperado do localStorage:', name);
+
+  user.value.role = formatRole(role);
+});
+
+function formatRole(role) {
+  const roleMap = {
+    'ADMIN': 'Administrador',
+    'USER': 'Locatário'
+  };
+  return roleMap[role] || role;
+}
+
+const user = ref({role:''});
+
 
 const linksList = [
   {
@@ -162,6 +192,8 @@ function onSubmit() {
     })
     .then(response => {
       localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('role', response.data.role);
+      localStorage.setItem('name', response.data.name);
       token.value = response.data.token;
       email.value = null;
       password.value = null;

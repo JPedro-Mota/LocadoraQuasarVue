@@ -17,7 +17,7 @@
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
         </template>
       </q-input>
-      <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
+      <q-btn v-if="user.role === 'ADMIN'" rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
 
     <TableComponents :columns="columns" :rows="rows">
@@ -103,7 +103,13 @@ onMounted(() => {
   getTable();
   fetchRenters();
   fetchBooks();
+  userValid();
 });
+
+const userValid = () => {
+  const role = localStorage.getItem('role');
+  user.value.role = role;
+}
 
 const columns = [
   { name: 'renterName', align: 'center', label: 'Locatário', field: 'renterName' },
@@ -121,6 +127,7 @@ const renters = ref([]);
 const books = ref([]);
 const selectedBook = ref([]);
 const selectedRenter = ref([]);
+const user = ref({role:''});
 
 const getTable = (inputSearch = '') => {
   api.get('/rents', { params: { search: inputSearch, page: page.value } })
@@ -213,6 +220,13 @@ const confirmDialog = ref({
 });
 
 const newRent = ref({ renterId: '', bookId: '', deadLine: '' });
+const clearErrors = () => {
+  errors.value = {
+    renterId: null,
+    deadLine: null,
+    bookId: null
+  };
+};
 
 const createDialog = ref({
   visible: false,
@@ -260,15 +274,6 @@ const saveNewRent = () => {
     deadLine: newRent.value.deadLine,
   };
 
-  if (!newRent.value.renterId || !newRent.value.bookId) {
-  $q.notify({
-    type: 'warning',
-    message: 'Por favor, selecione um locatário e um livro.',
-    icon: 'warning',
-  });
-  return;
-  }
-
   api.post('/rents', rentsData)
     .then(response => {
       rows.value.push(response.data);
@@ -283,14 +288,24 @@ const saveNewRent = () => {
       getTable();
     })
     .catch(error => {
-      console.error("Erro ao criar novo aluguel:", error.response ? error.response.data : error.message);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao criar o aluguel. Tente novamente mais tarde.',
-        icon: 'warning',
-      });
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.renterId) {
+          $q.notify({ type: 'negative', message: errors.renterId });
+        }
+        if (errors.deadLine) {
+          $q.notify({ type: 'negative', message: errors.deadLine });
+        }
+        if (errors.bookId) {
+          $q.notify({ type: 'negative', message: errors.bookId });
+        }
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
 };
+
 
 const clearSearch = () => {
   text.value = '';

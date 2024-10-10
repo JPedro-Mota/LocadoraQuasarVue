@@ -4,7 +4,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000">
         <path d="M40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm720 0v-120q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v120H760ZM360-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm400-160q0 66-47 113t-113 47q-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113Z"/>
       </svg>
-      Usuário
+      Usuários
     </h6>
   </div>
   <q-page padding>
@@ -18,25 +18,24 @@
         </template>
       </q-input>
 
-      <q-btn v-if="loggedInUserRole === 'ADMIN'" rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
+      <q-btn v-if="user.role === 'ADMIN'" rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
     <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
         <div class="dialogsa">
           <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
 
-          <q-btn v-if="row.role === 'ADMIN'" flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
-          <q-btn  v-if="row.role === 'ADMIN'" flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
+          <q-btn v-if="user.role === 'ADMIN'" flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
 
           <q-dialog v-model="viewDialog.visible" persistent>
-            <q-card style="min-width: 300px;">
+            <q-card style="min-width: 400px;">
               <q-card-section>
-                <div class="text-h6">Detalhes de Usuário</div>
+                <div class="text-h6" style="display: flex; align-items: end;"> <q-icon name="group" size="30px" style="align-items: center;"/>Detalhes do Usuário</div>
               </q-card-section>
-              <q-card-section class="q-pt-none">
-                <div><strong>Nome:</strong> {{ InfosUser.name }}</div>
-                <div><strong>Email:</strong> {{ InfosUser.email }}</div>
-                <div><strong>Nível de acesso:</strong> {{ InfosUser.role }}</div>
+              <q-card-section class="coloumn q-gutter-sm">
+                <q-input v-model="InfosUser.name" label="Nome" rounded outlined readonly> <template v-slot:prepend>  <q-icon name="person"/></template></q-input>
+                <q-input v-model="InfosUser.email" label="Email" rounded outlined readonly> <template v-slot:prepend>  <q-icon name="mail"/></template></q-input>
+                <q-input v-model="InfosUser.role" label="Cargo" rounded outlined readonly> <template v-slot:prepend>  <q-icon name="workspace_premium"/></template></q-input>
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Fechar" color="primary" v-close-popup />
@@ -57,21 +56,6 @@
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
-                <q-btn flat label="Cancelar" color="primary" v-close-popup />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-
-          <q-dialog v-model="deleteDialog.visible" persistent>
-            <q-card>
-              <q-card-section>
-                <div class="text-h6">Confirmar Exclusão</div>
-              </q-card-section>
-              <q-card-section class="q-pt-none">
-                Tem certeza que deseja excluir o usuário "{{ deleteDialog.data.name }}"?
-              </q-card-section>
-              <q-card-actions align="right">
-                <q-btn flat label="Excluir" color="primary" @click="confirmDelete" />
                 <q-btn flat label="Cancelar" color="primary" v-close-popup />
               </q-card-actions>
             </q-card>
@@ -153,8 +137,8 @@ const userToEdit = ref({ name: '', email: '', password: '', role: '' });
 const userToCreate = ref({ name: '', email: '', password: '', role: '' });
 const viewDialog = ref({ visible: false });
 const editDialog = ref({ visible: false });
-const deleteDialog = ref({ visible: false, data: {} });
 const createDialog = ref({ visible: false });
+const user = ref({role:''});
 const options = ref([
   { label: 'ADMIN', value: 'ADMIN' },
   { label: 'USER', value: 'USER' }
@@ -168,7 +152,13 @@ const columns = [
 
 onMounted(() => {
   getTable();
+  userValid();
 });
+
+const userValid = () => {
+  const role = localStorage.getItem('role');
+  user.value.role = role;
+}
 
 const getTable = (inputSearch = '') => {
   api.get('/user', { params: { search: inputSearch, page: page.value } })
@@ -200,7 +190,27 @@ const saveNewUser = () => {
       getTable();
     })
     .catch(error => {
-      console.error('Erro ao criar usuário:', error);
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.email) {
+          $q.notify({ type: 'negative', message: errors.email });
+        }
+
+        if (errors.password) {
+          $q.notify({ type: 'negative', message: errors.password });
+        }
+      } if (error.response.status === 403) {
+        const errors = error.response.data;
+          $q.notify({ type: 'negative', message: "Selecione um nível de acesso" });
+      }
+
+      else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel'});
+      }
     });
 };
 
@@ -222,8 +232,34 @@ const saveEdit = () => {
       getTable();
     })
     .catch(error => {
-      console.error('Erro ao editar usuário:', error);
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.email) {
+          $q.notify({ type: 'negative', message: errors.email });
+        }
+        if (errors.role) {
+          $q.notify({ type: 'negative', message: errors.role });
+        }
+        if (errors.password) {
+          $q.notify({ type: 'negative', message: errors.password });
+        }
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
+};
+
+const clearErrors = () => {
+  errors.value = {
+    name: "",
+    email: "",
+    role: null,
+    password: "",
+  };
 };
 
 const openDeleteDialog = (row) => {
@@ -231,21 +267,9 @@ const openDeleteDialog = (row) => {
   deleteDialog.value.data = row;
 };
 
-const confirmDelete = () => {
-  api.delete(`/user/${deleteDialog.value.data.id}`)
-    .then(() => {
-      $q.notify({ type: 'negative', message: 'Usuário excluído com sucesso!' });
-      deleteDialog.value.visible = false;
-      getTable();
-    })
-    .catch(error => {
-      console.error('Erro ao excluir usuário:', error);
-    });
-};
-
 const pageUp = () => {
     page.value++;
-    getTable(text.value);
+    getTable();
 };
 
 const pageDown = () => {

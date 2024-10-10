@@ -17,23 +17,23 @@
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
         </template>
       </q-input>
-      <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
+      <q-btn rounded dense v-if="user.role === 'ADMIN'" icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
 
     <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
         <div class="dialogsa">
           <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
-          <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
+          <q-btn flat round dense v-if="user.role === 'ADMIN'" icon="edit" @click="openEditDialog(row)" class="actions-bt" />
+          <q-btn flat round dense v-if="user.role === 'ADMIN'" icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
         </div>
       </template>
     </TableComponents>
 
     <q-dialog v-model="viewDialog.visible" persistent>
-      <q-card style="min-width: 300px;">
+      <q-card style="min-width: 400px;">
         <q-card-section>
-          <div class="text-h6">Detalhes do Livro</div>
+          <div class="text-h6" style="display: flex; align-items: end;"> <q-icon name="book" size="30px" style="align-items: center;"/> Detalhes do Livro</div>
         </q-card-section>
         <q-card-section class="q-pt-none">
           <div class="row q-gutter-md q-justify-center">
@@ -46,7 +46,7 @@
             <div class="column q-gutter-sm">
               <q-input v-model="InfosEdit.totalQuantity" label="Quantidade total" rounded outlined readonly><template v-slot:prepend>  <q-icon name="library_books"/></template></q-input>
               <q-input v-model="InfosEdit.launchDate" label="Data de lançamento" rounded outlined readonly><template v-slot:prepend> <q-icon name="calendar_month"/></template></q-input>
-              <q-input v-model="InfosEdit.publisherName" label="Nome da Editora" rounded outlined readonly><template v-slot:prepend> <q-icon name="edit"/></template></q-input>
+              <q-input v-model="InfosEdit.publisherName" label="Nome da Editora" rounded outlined readonly type="textarea" autogrow><template v-slot:prepend> <q-icon name="edit"/></template></q-input>
             </div>
           </div>
         </q-card-section>
@@ -66,7 +66,19 @@
           <q-input v-model="bookToEdit.author" label="Autor" />
           <q-input v-model="bookToEdit.totalQuantity" label="Quantidade Total" />
           <q-input v-model="bookToEdit.launchDate" label="Data de Lançamento" type="date" />
-          <q-select v-model="bookToEdit.publisherName" :options="publishers.map(p => ({ label: p.name, value: p.id }))" label="" />
+          <q-select
+              filled
+              v-model="selectedPublisher"
+              use-input
+              hide-selected
+              fill-input
+              input-debounce="0"
+              :options="publishers"
+              option-label="name"
+              label="Editora"
+              @filter="publisherFilter"
+              @update:model-value="onItemClickRegister(selectedPublisher, newBook)"
+            />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
@@ -177,12 +189,21 @@ const text = ref('');
 const InfosEdit = ref({});
 const newBook = ref({ name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' });
 const bookToEdit = ref({ id: '', name: '', author: '', totalQuantity: '', launchDate: '', publisherId: '' });
+const errors = ref({  name: null,   author: null, totalQuantity: null, launchDate: null, publisherId: null});
 const viewDialog = ref({ visible: false });
 const editDialog = ref({ visible: false });
 const deleteDialog = ref({ visible: false, data: {} });
 const createDialog = ref({ visible: false });
+const user = ref({role:''});
+const today = ref(new Date().toISOString().split('T')[0]);
 
-const getTable = (inputSearch = '') => {
+
+const userValid = () => {
+  const role = localStorage.getItem('role');
+  user.value.role = role;
+}
+
+const getTable = async (inputSearch = '') => {
   api.get('/book', { params: { search: inputSearch, page: page.value } })
     .then(response => {
       rows.value = response.data.content;
@@ -252,19 +273,31 @@ const saveEdit = () => {
     .then(() => {
       $q.notify({ type: 'positive', message: 'Livro atualizado com sucesso.' });
       editDialog.value.visible = false;
-      getTable(text.value);
+      getTable();
     })
     .catch(error => {
-      if(errors.response.status == 403){
-        showNotification('negative', 'Você não tem permissão usar essa função');
-      }
-      else{
-        showNotification('negative', errors.response.data.errors);
-      }
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
 
-      console.log("Erro ao criar livro", errors.response.data.errors);
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.author) {
+          $q.notify({ type: 'negative', message: errors.author });
+        }
+        if (errors.launchDate) {
+          $q.notify({ type: 'negative', message: errors.launchDate });
+        }
+        if(errors.publisherId){
+          $q.notify({ type: 'negative', message: errors.publisherId });
+        }
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar livro: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
 };
+
+
 
 const openDeleteDialog = (row) => {
   deleteDialog.value.visible = true;
@@ -279,10 +312,13 @@ const confirmDelete = () => {
       getTable(text.value);
     })
     .catch(error => {
-      const errorMessage = error.response && error.response.data && error.response.data.message
-        ? error.response.data.message
-        : 'Erro ao excluir livro.';
-      $q.notify({ type: 'negative', message: errorMessage, position: 'top-right' });
+      if (error.response.status === 400) {
+        errors.value = error.response.data;
+      } else if (error.response.status === 403) {
+        $q.notify({ type: 'negative', message: 'Você não tem permissão para usar essa função' });
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao atualizar livro' });
+      }
     });
 };
 
@@ -296,22 +332,48 @@ const openCreateDialog = () => {
 };
 
 const saveNewBook = () => {
-  api.post('/book', { ...newBook.value, publisherId: newBook.value.publisherId })
+  api.post('/book', newBook.value)
     .then(() => {
       $q.notify({ type: 'positive', message: 'Livro criado com sucesso.' });
       createDialog.value.visible = false;
-      getTable(text.value);
+      getTable();
+      clearForm();
     })
     .catch(error => {
-      const errorMessage = error.response && error.response.data && error.response.data.message
-        ? error.response.data.message
-        : 'Erro ao criar livro.';
-      $q.notify({ type: 'negative', message: errorMessage, position: 'top-right' });
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.author) {
+          $q.notify({ type: 'negative', message: errors.author });
+        }
+        if (errors.launchDate) {
+          $q.notify({ type: 'negative', message: errors.launchDate });
+        }
+        if(errors.publisherId){
+          $q.notify({ type: 'negative', message: errors.publisherId });
+        }
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar livro: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
 };
 
 onMounted(() => {
   getTable();
   getPublishers();
+  userValid();
 });
+
+const clearErrors = () => {
+  errors.value = {
+    name: null,
+    author: null,
+    totalQuantity: null,
+    launchDate: null,
+    publisherId: null
+  };
+};
 </script>

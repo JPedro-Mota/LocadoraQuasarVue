@@ -17,14 +17,14 @@
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
         </template>
       </q-input>
-      <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
+      <q-btn v-if="user.role === 'ADMIN'" rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
 
     <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
         <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" />
-        <q-btn flat round dense icon="edit" @click="openEditDialog(row)" />
-        <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" />
+        <q-btn v-if="user.role === 'ADMIN'" flat round dense icon="edit" @click="openEditDialog(row)" />
+        <q-btn v-if="user.role === 'ADMIN'" flat round dense icon="delete" @click="openDeleteDialog(row)" />
       </template>
     </TableComponents>
 
@@ -52,17 +52,25 @@
     </q-dialog>
 
     <q-dialog v-model="viewDialog.visible" persistent>
-      <q-card style="min-width: 300px;">
+      <q-card>
         <q-card-section>
-          <div class="text-h6">Detalhes do Locatário</div>
+          <div class="text-h6" style="display: flex; align-items: end;"> <q-icon name="person" size="30px" style="align-items: center;"/> Detalhes do Locatário</div>
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <div><strong>ID:</strong> {{ InfosEdit.id }}</div>
-          <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
-          <div><strong>Email:</strong> {{ InfosEdit.email }}</div>
-          <div><strong>Telefone:</strong> {{ InfosEdit.telephone }}</div>
-          <div><strong>Endereço:</strong> {{ InfosEdit.address }}</div>
-          <div><strong>CPF:</strong> {{ InfosEdit.cpf }}</div>
+
+        <div class="row q-gutter-md q-justify-center">
+          <div class="column q-gutter-sm">
+              <q-input v-model="InfosEdit.id" label="Id" rounded outlined readonly> <template v-slot:prepend>  <q-icon name="person"/></template></q-input>
+              <q-input v-model="InfosEdit.name" label="Nome " rounded outlined readonly> <template v-slot:prepend>  <q-icon name="person"/></template></q-input>
+              <q-input v-model="InfosEdit.email" label="Email " rounded outlined readonly> <template v-slot:prepend>  <q-icon name="mail"/></template></q-input>
+          </div>
+
+          <div class="column q-gutter-sm">
+            <q-input v-model="InfosEdit.telephone" label="Telefone" rounded outlined readonly> <template v-slot:prepend>  <q-icon name="phone"/></template></q-input>
+            <q-input v-model="InfosEdit.address" label="Endereço" rounded outlined readonly > <template v-slot:prepend>  <q-icon name="home"/></template></q-input>
+            <q-input v-model="InfosEdit.cpf" label="CPF" rounded outlined readonly > <template v-slot:prepend>  <q-icon name="badge"/></template></q-input>
+          </div>
+        </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Fechar" color="primary" v-close-popup />
@@ -137,21 +145,27 @@ const renterToEdit = ref({
   cpf: ''
 });
 const InfosEdit = ref({});
-
 const viewDialog = ref({ visible: false });
 const editDialog = ref({ visible: false });
 const deleteDialog = ref({ visible: false });
 const createDialog = ref({ visible: false });
+const user = ref({role:''});
 
 onMounted(() => {
   getTable();
+  userValid();
 });
+
+const userValid = () => {
+  const role = localStorage.getItem('role');
+  user.value.role = role;
+}
 
 const getTable = (inputSearch = '') => {
   api.get('/renter', { params: { search: inputSearch, page: page.value } })
   .then(response => {
         rows.value = response.data.content;
-        totalPages.value = response.headers['x-total-pages']; 
+        totalPages.value = response.headers['x-total-pages'];
         console.log("Dados obtidos com sucesso", response.data);
     })
     .catch(error => {
@@ -183,13 +197,38 @@ const saveNewRenter = () => {
       });
     })
     .catch(error => {
-      console.error("Erro ao criar locatário:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao criar locatário: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.email) {
+          $q.notify({ type: 'negative', message: errors.email });
+        }
+        if (errors.cpf) {
+          $q.notify({ type: 'negative', message: errors.cpf });
+        }
+        if (errors.telephone) {
+          $q.notify({ type: 'negative', message: errors.telephone });
+        }
+        if (errors.address) {
+          $q.notify({ type: 'negative', message: errors.address });
+        }
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
+};
+
+const clearErrors = () => {
+  errors.value = {
+    name: "",
+    email: "",
+    cpf: "",
+    telephone: "",
+    address: ""
+  };
 };
 
 const openCreateDialog = () => {

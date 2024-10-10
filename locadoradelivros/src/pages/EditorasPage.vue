@@ -18,14 +18,14 @@
           <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
         </template>
       </q-input>
-      <q-btn rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
+      <q-btn v-if="user.role === 'ADMIN'" rounded dense icon="add" label="Criar" @click="openCreateDialog" color="green" class="button-field"></q-btn>
     </div>
 
     <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
         <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
-        <q-btn flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
-        <q-btn flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
+        <q-btn v-if="user.role === 'ADMIN'"  flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
+        <q-btn v-if="user.role === 'ADMIN'"  flat round dense icon="delete" @click="openDeleteDialog(row)" class="actions-bt" />
       </template>
     </TableComponents>
 
@@ -48,15 +48,15 @@
     </q-dialog>
 
     <q-dialog v-model="viewDialog.visible" persistent>
-      <q-card style="min-width: 300px;">
+      <q-card style="min-width: 400px;">
         <q-card-section>
-          <div class="text-h6">Detalhes da Editora</div>
+          <div class="text-h6" style="display: flex; align-items: end;"> <q-icon name="edit" size="30px" style="align-items: center;"/> Detalhes da Editora</div>
         </q-card-section>
-        <q-card-section class="q-pt-none">
-          <div><strong>Nome:</strong> {{ InfosEdit.name }}</div>
-          <div><strong>Email:</strong> {{ InfosEdit.email }}</div>
-          <div><strong>Telefone:</strong> {{ InfosEdit.telephone }}</div>
-          <div><strong>Site:</strong> {{ InfosEdit.site }}</div>
+        <q-card-section class="column q-gutter-sm">
+          <q-input v-model="InfosEdit.name" label="Nome" rounded outlined readonly><template v-slot:prepend> <q-icon name="edit"/></template></q-input>
+          <q-input v-model="InfosEdit.email" label="Email" rounded outlined readonly><template v-slot:prepend> <q-icon name="mail"/></template></q-input>
+          <q-input v-model="InfosEdit.telephone" label="Telefone" rounded outlined readonly><template v-slot:prepend> <q-icon name="phone"/></template></q-input>
+          <q-input v-model="InfosEdit.site" label="Site" rounded outlined readonly><template v-slot:prepend> <q-icon name="public"/></template></q-input>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Fechar" color="primary" v-close-popup />
@@ -143,11 +143,25 @@ const totalPages = ref(1);
 const newPublisher = ref({ name: '', email: '', telephone: '', site: '' });
 const InfosEdit = ref({});
 const publisherToEdit = ref({ id: '', name: '', email: '', telephone: 0, site: '' });
-
 const viewDialog = ref({ visible: false });
 const editDialog = ref({ visible: false });
 const deleteDialog = ref({ visible: false });
 const createDialog = ref({ visible: false });
+const user = ref({role:''});
+
+const clearErrors = () => {
+  errors.value = {
+    name: null,
+    telephone: null,
+    email: null,
+    site: null,
+  };
+};
+
+const userValid = () => {
+  const role = localStorage.getItem('role');
+  user.value.role = role;
+}
 
 const columns = [
   { name: 'name', required: true, label: 'Nome', align: 'center', field: row => row.name, sortable: true },
@@ -219,7 +233,24 @@ const saveEdit = () => {
       $q.notify({ type: 'positive', message: 'Editora atualizada com sucesso!', position: 'top-right' });
     })
     .catch(error => {
-      $q.notify({ type: 'negative', message: 'Erro ao atualizar editora: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.telephone) {
+          $q.notify({ type: 'negative', message: errors.telephone });
+        }
+        if (errors.email) {
+          $q.notify({ type: 'negative', message: errors.email });
+        }
+        if (errors.site) {
+          $q.notify({ type: 'negative', message: errors.site });
+        }
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
 };
 
@@ -243,7 +274,24 @@ const saveNewPublisher = () => {
       $q.notify({ type: 'positive', message: 'Editora criada com sucesso!', position: 'top-right' });
     })
     .catch(error => {
-      $q.notify({ type: 'negative', message: 'Erro ao criar editora: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.telephone) {
+          $q.notify({ type: 'negative', message: errors.telephone });
+        }
+        if (errors.email) {
+          $q.notify({ type: 'negative', message: errors.email });
+        }
+        if (errors.site) {
+          $q.notify({ type: 'negative', message: errors.site });
+        }
+      } else {
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
 };
 
@@ -254,5 +302,6 @@ const clearSearch = () => {
 
 onMounted(() => {
   getTable();
+  userValid();
 });
 </script>

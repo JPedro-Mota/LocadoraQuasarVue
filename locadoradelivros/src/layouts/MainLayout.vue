@@ -2,11 +2,39 @@
   <q-layout view="lHh Lpr lFf" v-if="token">
     <q-header class="transparent-header">
       <q-toolbar class="transparent-toolbar">
-        <q-toolbar-title>
-          <img src="../assets/altislab.png" alt="AltisLab Logo" width="150px" />
+
+        <q-toolbar-title style="display: flex; justify-content: space-between; margin-top: 10px;">
+          <img src="../assets/altislab.png"  alt="AltisLab Logo" width="150px" height="40px"/>
+          <q-btn-dropdown flat dense :icon="user.role === 'Administrador' ? 'supervised_user_circle' : 'account_circle'"  @click="openViewDialog(row)" size="20px" style="color: #220127; border-radius: 50px;" >
+           <div style="max-width: 100%; max-height: 100%;">
+              <div class="row" style="display: flex; justify-content: left; align-items: center; width: 450px; height: 130px;">
+                <q-avatar :icon="user.role === 'Administrador' ? 'supervised_user_circle' : 'account_circle'" size="150px" style="color: #220127; width: 65px; height: 65px; margin-left: 35px;" />
+
+                <hr style="width: 3px; height: 60%; background-color: #220127; margin: 1px 0; border-radius: 50px; margin-right: 1px; margin-left: 10px;"/>
+
+                  <div style="margin-left: 5px; text-align: start; ">
+                      <p style="font-size: medium; margin: 1px;">{{ user.role }}</p>
+                      <p style="font-size: medium; margin: 1px;">{{ user.name }}</p>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: center;">
+                  <q-btn color="red" style="width: 45%; height: 45%;  border-radius: 10px;" clickable exact class="q-mx-auto q-mb-sm logout" @click="logout">
+                        <q-item-section avatar>
+                          <q-icon name="logout" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>Desconectar</q-item-label>
+                        </q-item-section>
+                  </q-btn>
+              </div>
+            </div>
+          </q-btn-dropdown>
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
+
+
 
     <q-drawer
       v-model="drawer"
@@ -29,7 +57,7 @@
           />
 
         </q-item>
-        <div class="space"><p style="color: yellow;">{{ user.role }}</p></div>
+        <div class="space"></div>
         <EssentialLink
           v-for="link in linksList"
           :key="link.title"
@@ -42,14 +70,7 @@
 
       <q-space />
 
-      <q-item clickable exact class="q-mx-auto q-mb-sm logout" @click="logout">
-        <q-item-section avatar>
-          <q-icon name="logout" />
-        </q-item-section>
-        <q-item-section>
-          <q-item-label>Logout</q-item-label>
-        </q-item-section>
-      </q-item>
+
     </q-drawer>
 
     <q-page-container>
@@ -130,6 +151,7 @@ onMounted(() => {
   console.log('Nome recuperado do localStorage:', name);
 
   user.value.role = formatRole(role);
+  user.value.name = formatRole(name);
 });
 
 function formatRole(role) {
@@ -140,7 +162,7 @@ function formatRole(role) {
   return roleMap[role] || role;
 }
 
-const user = ref({role:''});
+const user = ref({name:'', role:''});
 
 
 const linksList = [

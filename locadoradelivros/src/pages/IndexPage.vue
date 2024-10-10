@@ -1,10 +1,10 @@
 <template>
   <q-page padding>
     <div class="graphics-top" style="width: 100%;">
-      <div class="doughnut" style="width: 50%; height: 40vh; box-shadow: black;">
+      <div class="doughnut" style="width: 50%; height: 45vh; box-shadow: black;">
         <chart-bar-component canvasId="relacoesLivrosChart"></chart-bar-component>
       </div>
-      <div class="doughnut" style="width: 50%; height: 40vh; box-shadow: black;">
+      <div class="doughnut" style="width: 50%; height: 45vh; box-shadow: black;">
         <chart-doughnut-component canvasId="BooksChart"></chart-doughnut-component>
       </div><br/>
     </div>

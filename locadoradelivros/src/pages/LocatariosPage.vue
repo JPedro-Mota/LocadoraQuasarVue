@@ -38,7 +38,7 @@
           <q-form @submit.prevent="saveNewRenter">
             <q-input v-model="newRenter.name" label="Nome" />
             <q-input v-model="newRenter.email" label="Email" />
-            <q-input v-model="newRenter.telephone" label="Telefone" />
+            <q-input v-model="newRenter.telephone" label="Telefone" mask="(##) #####-####" fill-mask />
             <q-input v-model="newRenter.address" label="Endereço" />
             <q-input v-model="newRenter.cpf" label="CPF" mask="###.###.###-##" />
           </q-form>
@@ -86,7 +86,7 @@
         <q-card-section class="q-pt-none">
           <q-input v-model="renterToEdit.name" label="Nome" />
           <q-input v-model="renterToEdit.email" label="Email" />
-          <q-input v-model="renterToEdit.telephone" label="Telefone" />
+          <q-input v-model="renterToEdit.telephone" label="Telefone" mask="(##) #####-####" fill-mask  />
           <q-input v-model="renterToEdit.address" label="Endereço" />
           <q-input v-model="renterToEdit.cpf" label="CPF" mask="###.###.###-##" />
         </q-card-section>

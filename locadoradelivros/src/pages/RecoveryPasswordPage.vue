@@ -11,6 +11,7 @@
           standout
           v-model="email"
           label="Digite seu email*"
+          type="email"
           lazy-rules
           :rules="[val => val && val.includes('@') || 'Por favor, digite um email válido']"
         />
@@ -21,6 +22,7 @@
           v-model="tokenInput"
           label="Digite o token*"
           lazy-rules
+          :rules="[val => !!val || 'O token é obrigatório']"
         />
         <q-input
           bg-color="grey-5"

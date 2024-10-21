@@ -58,7 +58,7 @@
               option-label="name"
               label="Locatários"
               @filter="renterFilter"
-              @update:model-value="onItemClickRegister(selectedRenter, newRent)"
+              @update:model-value="onItemClickRegisterRenter(selectedRenter, newRent)"
             />
 
 
@@ -73,7 +73,7 @@
               option-label="name"
               label="Livros"
               @filter="bookFilter"
-              @update:model-value="onItemClickRegister(selectedBook, newRent)"
+              @update:model-value="onItemClickRegisterBook(selectedBook, newRent)"
             />
 
           <q-input v-model="newRent.deadLine" label="Prazo final" type="date" style="width: 95%;" />
@@ -184,6 +184,20 @@ const fetchBooks = (inputSearch = '') => {
 };
 
 
+function onItemClickRegisterRenter(selected, rent){
+  if (selected) {
+    rent.renterId = selected.id;
+  }
+}
+
+function onItemClickRegisterBook(selected, rent){
+  if (selected) {
+    rent.bookId = selected.id;
+  }
+}
+
+
+
 function bookFilter(val, update){
   if (val === '') {
     update(() => {
@@ -269,8 +283,8 @@ const openCreateDialog = () => {
 
 const saveNewRent = () => {
   const rentsData = {
-    renterId: newRent.value.renterId.value,
-    bookId: newRent.value.bookId.value,
+    renterId: newRent.value.renterId,
+    bookId: newRent.value.bookId,
     deadLine: newRent.value.deadLine,
   };
 

@@ -89,9 +89,10 @@
           rounded
           standout
           v-model="email"
+          type="email"
+           required lazy-rules
+          :rules="[ val => !!val || 'Email é obrigatório', val => /.+@.+\..+/.test(val) || 'Email inválido']"
           label="Digite seu email*"
-          lazy-rules
-          :rules="[val => val && val.length > 0 || 'Por favor, digite algo']"
         />
         <q-input
           bg-color="grey-5"

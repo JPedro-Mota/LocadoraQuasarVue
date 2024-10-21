@@ -25,7 +25,7 @@
         <div class="dialogsa">
           <q-btn flat round dense icon="visibility" @click="openViewDialog(row)" class="actions-bt" />
 
-          <q-btn v-if="user.role === 'ADMIN'" flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
+          <q-btn v-if="user.role === 'ADMIN' && row.email !== 'admin@example.com'" flat round dense icon="edit" @click="openEditDialog(row)" class="actions-bt" />
 
           <q-dialog v-model="viewDialog.visible" persistent>
             <q-card style="min-width: 400px;">
@@ -49,10 +49,9 @@
                 <div class="text-h6" style="display: flex; justify-content: center;">Editar Usuário</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
-                <q-input v-model="userToEdit.name" label="Nome" />
-                <q-input v-model="userToEdit.email" label="Email" />
-                <q-input v-model="userToEdit.password" label="Senha" type="password" />
-                <q-select filled v-model="userToEdit.role" :options="options" label="Nível de acesso" />
+                <q-input v-model="userToEdit.name" label="Nome" required lazy-rules :rules="[val => !!val || 'O nome é obrigatório']"/>
+                <q-input v-model="userToEdit.email" label="Email" type="email" required lazy-rules :rules="[ val => !!val || 'Email é obrigatório', val => /.+@.+\..+/.test(val) || 'Email inválido']"/>
+                <q-select filled v-model="userToEdit.role" :options="options" label="Nível de acesso" emit-value map-options required lazy-rules :rules="[val => !!val || 'O cargo é obrigatório']"  />
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
@@ -67,10 +66,10 @@
                 <div class="text-h6" style="display: flex; justify-content: center;">Cadastrar Usuário</div>
               </q-card-section>
               <q-card-section class="q-pt-none">
-                <q-input v-model="userToCreate.name" label="Nome" />
-                <q-input v-model="userToCreate.email" label="Email" />
-                <q-input v-model="userToCreate.password" label="Senha" type="password" />
-                <q-select filled v-model="userToCreate.role" :options="options" label="Nível de acesso" emit-value map-options />
+                <q-input v-model="userToCreate.name" label="Nome" required lazy-rules :rules="[val => !!val || 'O nome é obrigatório']"/>
+                <q-input v-model="userToCreate.email" label="Email" type="email" required lazy-rules :rules="[ val => !!val || 'Email é obrigatório', val => /.+@.+\..+/.test(val) || 'Email inválido']"/>
+                <q-input v-model="userToCreate.password" label="Senha" type="password" required lazy-rules :rules="[val => !!val || 'A senha é obrigatório']" />
+                <q-select filled v-model="userToCreate.role" :options="options" label="Nível de acesso" emit-value map-options required lazy-rules :rules="[val => !!val || 'O cargo é obrigatório']" />
               </q-card-section>
               <q-card-actions align="right">
                 <q-btn flat label="Salvar" color="primary" @click="saveNewUser" />
@@ -190,22 +189,9 @@ const saveNewUser = () => {
       getTable();
     })
     .catch(error => {
-      if (error.response && error.response.status === 400) {
+       if (error.response.status === 400) {
         const errors = error.response.data;
-
-        if (errors.name) {
-          $q.notify({ type: 'negative', message: errors.name });
-        }
-        if (errors.email) {
-          $q.notify({ type: 'negative', message: errors.email });
-        }
-
-        if (errors.password) {
-          $q.notify({ type: 'negative', message: errors.password });
-        }
-      } if (error.response.status === 403) {
-        const errors = error.response.data;
-          $q.notify({ type: 'negative', message: "Selecione um nível de acesso" });
+          $q.notify({ type: 'negative', message: "Erro ao criar aluguel" });
       }
 
       else {
@@ -234,20 +220,6 @@ const saveEdit = () => {
     .catch(error => {
       if (error.response && error.response.status === 400) {
         const errors = error.response.data;
-
-        if (errors.name) {
-          $q.notify({ type: 'negative', message: errors.name });
-        }
-        if (errors.email) {
-          $q.notify({ type: 'negative', message: errors.email });
-        }
-        if (errors.role) {
-          $q.notify({ type: 'negative', message: errors.role });
-        }
-        if (errors.password) {
-          $q.notify({ type: 'negative', message: errors.password });
-        }
-      } else {
         $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
       }
     });

@@ -252,9 +252,9 @@ function publisherFilter(val, update) {
 }
 
 
-function onItemClickRegister(seleceted, book){
-  if (seleceted) {
-    book.publisherId = seleceted.id;
+function onItemClickRegister(selected, book){
+  if (selected) {
+    book.publisherId = selected.id;
   }
 }
 

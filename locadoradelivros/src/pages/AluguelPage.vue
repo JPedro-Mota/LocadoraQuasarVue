@@ -22,7 +22,7 @@
 
     <TableComponents :columns="columns" :rows="rows">
       <template #actions="{ row }">
-        <q-btn flat round dense icon="check" @click="openConfirmDialog(row)" class="actions-bt" />
+        <q-btn flat round dense icon="check" @click="openConfirmDialog(row)" class="actions-bt" :disable="['IN_TIME', 'DELIVERED_WITH_DELAY', 'LATE'].includes(row.status)" />
       </template>
     </TableComponents>
 
@@ -130,6 +130,7 @@ const selectedRenter = ref([]);
 const user = ref({role:''});
 
 const getTable = (inputSearch = '') => {
+  rows.value = [];
   api.get('/rents', { params: { search: inputSearch, page: page.value } })
   .then(response => {
       rows.value = response.data.content;
@@ -154,9 +155,9 @@ const pageDown = () => {
 };
 
 const fetchRenters = (inputSearch = '') => {
-  api.get('/renter', {params: {search: inputSearch}})
+  api.get('/renter/all', {params: {search: inputSearch}})
     .then(response => {
-      renters.value = response.data.content;
+      renters.value = response.data;
     })
     .catch(error => {
       console.error("Erro ao obter locatários:", error);
@@ -169,9 +170,11 @@ const fetchRenters = (inputSearch = '') => {
 };
 
 const fetchBooks = (inputSearch = '') => {
-  api.get('/book', {params: {search: inputSearch}})
+  api.get('/books/all', {params: {search: inputSearch}})
     .then(response => {
-      books.value = response.data.content;
+
+      console.log(response.data)
+      books.value = response.data;
     })
     .catch(error => {
       console.error("Erro ao obter livros:", error);
@@ -314,8 +317,11 @@ const saveNewRent = () => {
         if (errors.bookId) {
           $q.notify({ type: 'negative', message: errors.bookId });
         }
+        if (errors.error) {
+          $q.notify({ type: 'negative', message: errors.error });
+        }
       } else {
-        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel '});
       }
     });
 };

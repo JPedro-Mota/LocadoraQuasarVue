@@ -193,9 +193,12 @@ const saveNewUser = () => {
         const errors = error.response.data;
           $q.notify({ type: 'negative', message: "Erro ao criar aluguel" });
       }
+      if (errors.error) {
+          $q.notify({ type: 'negative', message: errors.error });
+        }
 
       else {
-        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel'});
+        $q.notify({ type: 'negative', message: 'Erro ao criar aluguel ' });
       }
     });
 };

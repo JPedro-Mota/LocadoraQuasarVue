@@ -38,7 +38,7 @@
           <q-input v-model="newPublisher.name" label="Nome" required lazy-rules :rules="[val => !!val || 'O nome é obrigatório']" />
           <q-input v-model="newPublisher.email" label="Email" type="email" required lazy-rules :rules="[ val => !!val || 'Email é obrigatório', val => /.+@.+\..+/.test(val) || 'Email inválido']" />
           <q-input v-model="newPublisher.telephone" label="Telefone" type="tel" required lazy-rules :rules="[val => !!val || 'Telefone é obrigatório', val => /^(\(?\d{2}\)?\s?)?(\d{4,5}\-?\d{4})$/.test(val) || 'Telefone inválido']" mask="(##) #####-####" fill-mask />
-          <q-input v-model="newPublisher.site" label="Site" />
+          <q-input v-model="newPublisher.site" label="Site" type="url"   />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Salvar" color="primary" @click="saveNewPublisher" />
@@ -73,7 +73,7 @@
           <q-input v-model="publisherToEdit.name" label="Nome" required lazy-rules :rules="[val => !!val || 'O nome é obrigatório']" />
           <q-input v-model="publisherToEdit.email" label="Email" required lazy-rules :rules="[ val => !!val || 'Email é obrigatório', val => /.+@.+\..+/.test(val) || 'Email inválido']" />
           <q-input v-model="publisherToEdit.telephone" label="Telefone" type="tel" required lazy-rules :rules="[val => !!val || 'Telefone é obrigatório', val => /^(\(?\d{2}\)?\s?)?(\d{4,5}\-?\d{4})$/.test(val) || 'Telefone inválido']" mask="(##) ####-####" fill-mask />
-          <q-input v-model="publisherToEdit.site" label="Site" />
+          <q-input v-model="publisherToEdit.site" label="Site" type="url" />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Salvar" color="primary" @click="saveEdit" />
@@ -247,6 +247,9 @@ const saveEdit = () => {
         }
         if (errors.site) {
           $q.notify({ type: 'negative', message: errors.site });
+        }
+        if (errors.error) {
+          $q.notify({ type: 'negative', message: errors.error });
         }
       } else {
         $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });

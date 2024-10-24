@@ -204,6 +204,7 @@ const userValid = () => {
 }
 
 const getTable = async (inputSearch = '') => {
+  rows.value = [];
   api.get('/book', { params: { search: inputSearch, page: page.value } })
     .then(response => {
       rows.value = response.data.content;
@@ -227,9 +228,9 @@ const pageDown = () => {
 };
 
 const getPublishers = (inputSearch = '') => {
-  api.get('/publisher', {params: {search: inputSearch}})
+  api.get('/publisher/all', {params: {search: inputSearch}})
     .then(response => {
-      publishers.value = response.data.content;
+      publishers.value = response.data;
     })
     .catch(error => {
       $q.notify({ type: 'negative', message: 'Erro ao carregar editoras: ' + (error.response ? error.response.data.message : error.message), position: 'top-right' });
@@ -292,7 +293,7 @@ const saveEdit = () => {
           $q.notify({ type: 'negative', message: errors.publisherId });
         }
       } else {
-        $q.notify({ type: 'negative', message: 'Erro ao criar livro: ' + (error.response ? error.response.data.message : error.message) });
+        $q.notify({ type: 'negative', message: 'Erro ao criar livro ' });
       }
     });
 };

@@ -36,10 +36,10 @@
 
         <q-card-section class="q-pt-none">
           <q-form @submit.prevent="saveNewRenter">
-            <q-input v-model="newRenter.name" label="Nome" />
-            <q-input v-model="newRenter.email" label="Email" />
-            <q-input v-model="newRenter.telephone" label="Telefone" mask="(##) #####-####" fill-mask />
-            <q-input v-model="newRenter.address" label="Endereço" />
+            <q-input v-model="newRenter.name" label="Nome" required lazy-rules :rules="[val => !!val || 'O nome é obrigatório']" />
+            <q-input v-model="newRenter.email" label="Email" type="email" required lazy-rules :rules="[ val => !!val || 'Email é obrigatório', val => /.+@.+\..+/.test(val) || 'Email inválido']" />
+            <q-input v-model="newRenter.telephone" label="Telefone"  type="tel" required lazy-rules :rules="[val => !!val || 'Telefone é obrigatório', val => /^(\(?\d{2}\)?\s?)?(\d{4,5}\-?\d{4})$/.test(val) || 'Telefone inválido']" mask="(##) #####-####" fill-mask  />
+            <q-input v-model="newRenter.address" label="Endereço" requiered lazy-rules :rules="[val => !!val || 'O endereço é obrigatório']"/>
             <q-input v-model="newRenter.cpf" label="CPF" mask="###.###.###-##" />
           </q-form>
         </q-card-section>
@@ -162,6 +162,7 @@ const userValid = () => {
 }
 
 const getTable = (inputSearch = '') => {
+  rows.value = [];
   api.get('/renter', { params: { search: inputSearch, page: page.value } })
   .then(response => {
         rows.value = response.data.content;
@@ -215,7 +216,10 @@ const saveNewRenter = () => {
         if (errors.address) {
           $q.notify({ type: 'negative', message: errors.address });
         }
-      } else {
+        if (errors.error) {
+          $q.notify({ type: 'negative', message: errors.error });
+        }
+      }  else {
         $q.notify({ type: 'negative', message: 'Erro ao criar aluguel: ' + (error.response ? error.response.data.message : error.message) });
       }
     });
@@ -278,12 +282,30 @@ const saveEdit = () => {
       });
     })
     .catch(error => {
-      console.error("Erro ao atualizar locatário:", error);
-      $q.notify({
-        type: 'negative',
-        message: 'Erro ao atualizar locatário: ' + (error.response ? error.response.data.message : error.message),
-        position: 'top-right'
-      });
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data;
+
+        if (errors.name) {
+          $q.notify({ type: 'negative', message: errors.name });
+        }
+        if (errors.email) {
+          $q.notify({ type: 'negative', message: errors.email });
+        }
+        if (errors.cpf) {
+          $q.notify({ type: 'negative', message: errors.cpf });
+        }
+        if (errors.telephone) {
+          $q.notify({ type: 'negative', message: errors.telephone });
+        }
+        if (errors.address) {
+          $q.notify({ type: 'negative', message: errors.address });
+        }
+        if (errors.error) {
+          $q.notify({ type: 'negative', message: errors.error });
+        }
+      }  else {
+        $q.notify({ type: 'negative', message: 'Erro ao editar aluguel: ' + (error.response ? error.response.data.message : error.message) });
+      }
     });
 };
 
